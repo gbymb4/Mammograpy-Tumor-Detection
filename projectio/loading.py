@@ -33,6 +33,7 @@ def load_dicom_mammogram(fname, transforms=None, stack_transforms=None):
     return img, name
 
 
+
 def load_dicom_mammograms(dataset, load_limit=None, **kwargs):
     data_dir = None
     
@@ -51,4 +52,26 @@ def load_dicom_mammograms(dataset, load_limit=None, **kwargs):
     imgs = np.array([l[0] for l in loaded])
     names = np.array([l[1] for l in loaded])
     
+    return imgs, names
+
+
+
+def load_preprocessed_images(dataset, load_limit=None):
+    data_dir = None
+    
+    if dataset.lower() == 'inbreast':
+        data_dir = f'{c.PREPROCESSED_INBREAST_DIR}/imgs'
+    
+    img_fnames = os.listdir(data_dir)
+    img_fnames = list(filter(lambda x: '.npy' in x, img_fnames))
+    img_fnames = list(map(lambda x: f'{data_dir}/' + x, img_fnames))
+    
+    if load_limit is not None:
+        img_fnames = img_fnames[:load_limit]
+        
+    loaded = [np.load(fname) for fname in img_fnames]
+    
+    imgs = np.array(loaded)
+    names = np.array([Path(fname).name.split('.')[0] for fname in img_fnames])
+        
     return imgs, names
