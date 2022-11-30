@@ -129,7 +129,8 @@ dmypy.json
 .pyre/
 
 # Data
-data/raw/*/*
+data/raw/*
+data/preprocessed/*
 
 # Testing Scripts
 testing.py

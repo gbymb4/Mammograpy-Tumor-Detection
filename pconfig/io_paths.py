@@ -7,5 +7,7 @@ Created on Wed Nov 30 14:23:30 2022
 """
 
 RAW_DATA_DIR = 'data/raw'
+PREPROCESSED_DATA_DIR = 'data/preprocessed'
 
 INBREAST_DIR = f'{RAW_DATA_DIR}/INbreast'
+PREPROCESSED_INBREAST_DIR = f'{PREPROCESSED_DATA_DIR}/INbreast'
