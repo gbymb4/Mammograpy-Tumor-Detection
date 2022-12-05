@@ -5,7 +5,7 @@ Created on Mon Nov 21 15:53:48 2022
 @author: Gavin
 """
 
-import os
+import os, cv2
 
 from pathlib import Path
 
@@ -24,7 +24,7 @@ def load_dicom_mammogram(fname, transforms=None, stack_transforms=None):
             img = transform(img)
     
     if stack_transforms is not None:
-        channels = []
+        channels = [img]
         for transform in stack_transforms:
             channels.append(transform(img))
 
