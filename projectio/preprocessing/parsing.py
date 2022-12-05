@@ -17,6 +17,8 @@ import numpy as np
 def parse_inbreast_xml(fname):
     with open(fname, 'r') as file:
         data = file.read()
+        
+        file.close()
     
     soup = BeautifulSoup(data, 'xml')
     
@@ -29,7 +31,7 @@ def parse_inbreast_xml(fname):
         .findNextSibling() \
         .findAll('dict')
     
-    rois_data = []
+    rois_data = {'classes': [], 'coords': []}
     for roi in rois:
         name = list(
             filter(
@@ -53,9 +55,9 @@ def parse_inbreast_xml(fname):
             return eval(coord.text)
             
         coords = list(map(make_tuple, coords))
-        coords = np.array(coords)
         
-        rois_data.append((name, coords))
+        rois_data['classes'].append(name)
+        rois_data['coords'].append(coords)
     
     return rois_data
 
@@ -67,13 +69,13 @@ def parse_inbreast_xmls(load_limit=None):
     xml_fnames = os.listdir(data_dir)
     xml_fnames = list(filter(lambda x: '.xml' in x, xml_fnames))
     xml_fnames = list(map(lambda x: f'{data_dir}/' + x, xml_fnames))
+    xml_fnames = sorted(xml_fnames, key=lambda x: int(Path(x).name.split('_')[0][:-4]))
     
     if load_limit is not None:
         xml_fnames = xml_fnames[:load_limit]
     
-    parsed = [parse_inbreast_xml(fname) for fname in xml_fnames]
-    
-    data = np.array(parsed)
     names = np.array([Path(fname).name.split('.')[0] for fname in xml_fnames])
     
-    return data, names
+    parsed = {name: parse_inbreast_xml(fname) for name, fname in zip(names, xml_fnames)}
+    
+    return parsed

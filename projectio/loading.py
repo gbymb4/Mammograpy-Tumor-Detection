@@ -43,6 +43,7 @@ def load_dicom_mammograms(dataset, load_limit=None, **kwargs):
     img_fnames = os.listdir(data_dir)
     img_fnames = list(filter(lambda x: '.dcm' in x, img_fnames))
     img_fnames = list(map(lambda x: f'{data_dir}/' + x, img_fnames))
+    img_fnames = sorted(img_fnames, key=lambda x: int(Path(x).name.split('_')[0]))
     
     if load_limit is not None:
         img_fnames = img_fnames[:load_limit]
@@ -65,6 +66,7 @@ def load_preprocessed_images(dataset, load_limit=None):
     img_fnames = os.listdir(data_dir)
     img_fnames = list(filter(lambda x: '.npy' in x, img_fnames))
     img_fnames = list(map(lambda x: f'{data_dir}/' + x, img_fnames))
+    img_fnames = sorted(img_fnames, key=lambda x: int(Path(x).name.split('_')[0]))
     
     if load_limit is not None:
         img_fnames = img_fnames[:load_limit]
