@@ -33,31 +33,34 @@ def parse_inbreast_xml(fname):
     
     rois_data = {'classes': [], 'coords': []}
     for roi in rois:
-        name = list(
-            filter(
-                lambda x: x.contents == ['Name'],
-                roi.findAll('key')
-            )
-        )[0] \
-            .findNextSibling() \
-            .contents[0]
-        
-        coords = list(
-            filter(
-                lambda x: x.contents == ['Point_px'],
-                roi.findAll('key')
-            )
-        )[0] \
-            .findNextSibling() \
-            .findAll('string')
+        try:
+            name = list(
+                filter(
+                    lambda x: x.contents == ['Name'],
+                    roi.findAll('key')
+                )
+            )[0] \
+                .findNextSibling() \
+                .contents[0]
             
-        def make_tuple(coord):
-            return eval(coord.text)
+            coords = list(
+                filter(
+                    lambda x: x.contents == ['Point_px'],
+                    roi.findAll('key')
+                )
+            )[0] \
+                .findNextSibling() \
+                .findAll('string')
+                
+            def make_tuple(coord):
+                return eval(coord.text)
+                
+            coords = list(map(make_tuple, coords))
             
-        coords = list(map(make_tuple, coords))
-        
-        rois_data['classes'].append(name)
-        rois_data['coords'].append(coords)
+            rois_data['classes'].append(name)
+            rois_data['coords'].append(coords)
+            
+        except IndexError:... # skip missing data
     
     return rois_data
 
