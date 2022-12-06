@@ -15,6 +15,11 @@ import numpy as np
 
 
 def parse_inbreast_xml(fname):
+    rois_data = {'classes': [], 'coords': []}
+    
+    if not os.path.isfile(fname):
+        return rois_data
+    
     with open(fname, 'r') as file:
         data = file.read()
         
@@ -30,8 +35,7 @@ def parse_inbreast_xml(fname):
     )[0] \
         .findNextSibling() \
         .findAll('dict')
-    
-    rois_data = {'classes': [], 'coords': []}
+
     for roi in rois:
         try:
             name = list(
@@ -66,16 +70,13 @@ def parse_inbreast_xml(fname):
 
 
     
-def parse_inbreast_xmls(load_limit=None):
+def parse_inbreast_xmls(img_names, load_limit=None):
     data_dir = f'{c.INBREAST_DIR}/AllXML'
     
-    xml_fnames = os.listdir(data_dir)
-    xml_fnames = list(filter(lambda x: '.xml' in x, xml_fnames))
-    xml_fnames = list(map(lambda x: f'{data_dir}/' + x, xml_fnames))
-    xml_fnames = sorted(xml_fnames, key=lambda x: int(Path(x).name.split('_')[0][:-4]))
-    
     if load_limit is not None:
-        xml_fnames = xml_fnames[:load_limit]
+        img_names = img_names[:load_limit]
+    
+    xml_fnames = [f'{data_dir}/{name}.xml' for name in img_names]
     
     names = np.array([Path(fname).name.split('.')[0] for fname in xml_fnames])
     

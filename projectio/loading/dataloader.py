@@ -18,7 +18,11 @@ from torch.utils.data import DataLoader, Dataset
 class ROIDataset(Dataset):
     
     def __init__(self, dataset, device='cpu'):
-        imgs = load_preprocessed_images(dataset) / 255.0
+        super().__init__()
+        
+        imgs, _ = load_preprocessed_images(dataset)
+        
+        imgs = imgs.astype(float) / 255.0
         imgs = np.swapaxes(imgs, 2, 3)
         imgs = torch.from_numpy(imgs).float()
         
@@ -44,22 +48,24 @@ class ROIDataset(Dataset):
                 
                 boxes.append(box)
                 labels.append(label)
-                
-            all_boxes.append(boxes)
-            all_labels.append(labels)
             
-        all_boxes, all_labels = np.array(all_boxes), np.array(all_labels)
-        
-        all_boxes = torch.from_numpy(all_boxes).float()
-        all_labels = torch.from_numpy(imgs).type(torch.int64)
+            boxes = np.array(boxes)
+            boxes = torch.from_numpy(boxes).float()
+            
+            all_boxes.append(boxes)
+            
+            labels = np.array(labels)
+            labels = torch.from_numpy(labels).type(torch.int64)
+            
+            all_labels.append(labels)
         
         self.boxes = all_boxes
         self.labels = all_labels
-            
+        
         
 
     def __len__(self):
-        return self.imgs.shape[0]
+        return len(self.imgs)
 
     def __getitem__(self, idx):
         if torch.is_tensor(idx):
@@ -77,15 +83,15 @@ def load_train_test_data(
         dataset_name,
         seed=0,
         device='cpu',
-        batch_size=None,
-        test_size=None
+        batch_size=1,
+        test_size=0.1
     ):
     
     generator = torch.Generator().manual_seed(seed)
     
     train_dataset, test_dataset = load_train_test_datasets_only(
         dataset_name,
-        seed,
+        generator,
         device,
         batch_size,
         test_size
@@ -100,18 +106,13 @@ def load_train_test_data(
 
 def load_train_test_datasets_only(
         dataset_name,
-        seed=0,
+        generator,
         device='cpu',
-        batch_size=None,
-        test_size=None
+        batch_size=1,
+        test_size=0.1
     ):
     
-    if batch_size is None: batch_size = c.BATCH_SIZE
-    if test_size is None:test_size = c.TEST_SIZE
-    
     dataset = ROIDataset(dataset_name, device=device)
-    
-    generator = torch.Generator().manual_seed(seed)
     
     num_instances = len(dataset)
     
