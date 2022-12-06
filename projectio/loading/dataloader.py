@@ -17,7 +17,7 @@ from torch.utils.data import DataLoader, Dataset
 
 class ROIDataset(Dataset):
     
-    def __init__(self, dataset, device='cpu'):
+    def __init__(self, dataset, device='cpu', filter_empty_imgs=True):
         super().__init__()
         
         imgs, _ = load_preprocessed_images(dataset)
@@ -25,8 +25,7 @@ class ROIDataset(Dataset):
         imgs = imgs.astype(float) / 255.0
         imgs = np.swapaxes(imgs, 2, 3)
         imgs = torch.from_numpy(imgs).float()
-        
-        self.imgs = imgs.to(device)
+        imgs = imgs.to(device)
         
         bboxes = load_bboxes(dataset)
         
@@ -43,7 +42,7 @@ class ROIDataset(Dataset):
                 
                 if label not in encoding.keys():
                     continue
-                
+                    
                 label = encoding[label]
                 
                 boxes.append(box)
@@ -51,16 +50,42 @@ class ROIDataset(Dataset):
             
             boxes = np.array(boxes)
             boxes = torch.from_numpy(boxes).float()
+            boxes = boxes.to(device)
             
             all_boxes.append(boxes)
             
             labels = np.array(labels)
             labels = torch.from_numpy(labels).type(torch.int64)
+            labels = labels.to(device)
             
             all_labels.append(labels)
+            
+        if filter_empty_imgs:
+            mask = []
+            
+            for boxes in all_boxes:
+                if len(boxes) == 0: 
+                    mask.append(False)
+                else:
+                    mask.append(True)
         
-        self.boxes = all_boxes
-        self.labels = all_labels
+            imgs = imgs[mask]
+            
+            new_boxes, new_labels = [], []
+            for boxes, labels, mask_elem in zip(all_boxes, all_labels, mask):
+                if mask_elem:
+                    new_boxes.append(boxes)
+                    new_labels.append(labels)
+                
+            all_boxes = new_boxes
+            all_labels = new_labels
+        
+        self.imgs = imgs
+        
+        targets = [{'boxes': bs, 'labels': ls} for bs, ls in zip(all_boxes, all_labels)]
+        targets = np.array(targets, dtype=dict)
+        
+        self.targets = targets
         
         
 
@@ -72,10 +97,9 @@ class ROIDataset(Dataset):
             idx = idx.tolist()
         
         imgs = self.imgs[idx]
-        boxes = self.boxes[idx]
-        labels = self.labels[idx]
-
-        return imgs, boxes, labels
+        targets = self.targets[idx]
+        
+        return imgs, targets
 
         
 
@@ -83,18 +107,20 @@ def load_train_test_data(
         dataset_name,
         seed=0,
         device='cpu',
-        batch_size=1,
-        test_size=0.1
+        batch_size=2,
+        test_size=0.1,
+        **kwargs
     ):
     
     generator = torch.Generator().manual_seed(seed)
     
     train_dataset, test_dataset = load_train_test_datasets_only(
         dataset_name,
-        generator,
+        seed,
         device,
         batch_size,
-        test_size
+        test_size,
+        **kwargs
     )
         
     train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, generator=generator)
@@ -106,13 +132,16 @@ def load_train_test_data(
 
 def load_train_test_datasets_only(
         dataset_name,
-        generator,
+        seed=0,
         device='cpu',
-        batch_size=1,
-        test_size=0.1
+        batch_size=2,
+        test_size=0.1,
+        **kwargs
     ):
     
-    dataset = ROIDataset(dataset_name, device=device)
+    generator = torch.Generator().manual_seed(seed)
+    
+    dataset = ROIDataset(dataset_name, device=device, **kwargs)
     
     num_instances = len(dataset)
     

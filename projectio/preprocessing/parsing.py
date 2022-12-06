@@ -14,7 +14,7 @@ import pconfig as c
 import numpy as np
 
 
-def parse_inbreast_xml(fname):
+def parse_inbreast_xml(fname, cull_singles=True):
     rois_data = {'classes': [], 'coords': []}
     
     if not os.path.isfile(fname):
@@ -56,6 +56,9 @@ def parse_inbreast_xml(fname):
                 .findNextSibling() \
                 .findAll('string')
                 
+            if cull_singles and len(coords) == 1:
+                continue
+                
             def make_tuple(coord):
                 return eval(coord.text)
                 
@@ -70,7 +73,7 @@ def parse_inbreast_xml(fname):
 
 
     
-def parse_inbreast_xmls(img_names, load_limit=None):
+def parse_inbreast_xmls(img_names, load_limit=None, **kwargs):
     data_dir = f'{c.INBREAST_DIR}/AllXML'
     
     if load_limit is not None:
@@ -80,6 +83,6 @@ def parse_inbreast_xmls(img_names, load_limit=None):
     
     names = np.array([Path(fname).name.split('.')[0] for fname in xml_fnames])
     
-    parsed = {name: parse_inbreast_xml(fname) for name, fname in zip(names, xml_fnames)}
+    parsed = {name: parse_inbreast_xml(fname, **kwargs) for name, fname in zip(names, xml_fnames)}
     
     return parsed
