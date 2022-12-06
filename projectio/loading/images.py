@@ -16,6 +16,7 @@ import pconfig as c
 
 def load_dicom_mammogram(fname, transforms=None, stack_transforms=None):
     img = dicom.dcmread(fname).pixel_array
+    img = cv2.normalize(img,  None, 0, 255, cv2.NORM_MINMAX)
     
     name = Path(fname).name.split('_')[0]
     
@@ -25,8 +26,12 @@ def load_dicom_mammogram(fname, transforms=None, stack_transforms=None):
     
     if stack_transforms is not None:
         channels = [img]
+        
         for transform in stack_transforms:
-            channels.append(transform(img))
+            transformed = transform(img)
+            transformed = cv2.normalize(transformed,  None, 0, 255, cv2.NORM_MINMAX)
+            
+            channels.append(transformed)
 
         img = np.array(channels)
 
