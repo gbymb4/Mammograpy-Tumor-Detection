@@ -172,11 +172,11 @@ def load_train_test_datasets_only(
 
 
 
-def to_ssd_targets(boxes, labels, ignore_labels=True):
+def to_ssd_targets(boxes, labels, ignore_labels=True, device='cpu'):
     if ignore_labels:
         targets = [{
             'boxes': bs,
-            'labels': torch.zeros(len(ls)).type(torch.long)
+            'labels': torch.ones(len(ls)).type(torch.long).to(device)
         } for bs, ls in zip(boxes, labels)]
     else:
         targets = [{
