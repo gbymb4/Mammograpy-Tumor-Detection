@@ -1,3 +1,3 @@
 from .bboxes import *
-from .dataloader import *
+from .dataloaders import *
 from .images import *

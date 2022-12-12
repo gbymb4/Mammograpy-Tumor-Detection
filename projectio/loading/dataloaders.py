@@ -82,10 +82,8 @@ class ROIDataset(Dataset):
         
         self.imgs = imgs
         
-        targets = [{'boxes': bs, 'labels': ls} for bs, ls in zip(all_boxes, all_labels)]
-        targets = np.array(targets, dtype=dict)
-        
-        self.targets = targets
+        self.boxes = all_boxes
+        self.labels = all_labels
         
         
 
@@ -97,9 +95,10 @@ class ROIDataset(Dataset):
             idx = idx.tolist()
         
         imgs = self.imgs[idx]
-        targets = self.targets[idx]
+        boxes = self.boxes[idx]
+        labels = self.labels[idx]
         
-        return imgs, targets
+        return imgs, boxes, labels
 
         
 
@@ -107,7 +106,7 @@ def load_train_test_data(
         dataset_name,
         seed=0,
         device='cpu',
-        batch_size=2,
+        batch_size=1,
         test_size=0.1,
         **kwargs
     ):
@@ -123,8 +122,21 @@ def load_train_test_data(
         **kwargs
     )
         
-    train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, generator=generator)
-    test_dataloader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True, generator=generator)
+    train_dataloader = DataLoader(
+        train_dataset,
+        batch_size=batch_size,
+        shuffle=True,
+        generator=generator,
+        collate_fn=__collate
+    )
+    
+    test_dataloader = DataLoader(
+        test_dataset,
+        batch_size=batch_size,
+        shuffle=True,
+        generator=generator,
+        collate_fn=__collate
+    )
     
     return train_dataloader, test_dataloader
 
@@ -134,7 +146,7 @@ def load_train_test_datasets_only(
         dataset_name,
         seed=0,
         device='cpu',
-        batch_size=2,
+        batch_size=1,
         test_size=0.1,
         **kwargs
     ):
@@ -157,3 +169,27 @@ def load_train_test_datasets_only(
         
     
     return train_dataset, test_dataset
+
+
+
+def to_ssd_targets(boxes, labels, ignore_labels=True):
+    if ignore_labels:
+        targets = [{
+            'boxes': bs,
+            'labels': torch.zeros(len(ls)).type(torch.long)
+        } for bs, ls in zip(boxes, labels)]
+    else:
+        targets = [{
+            'boxes': bs,
+            'labels': ls,
+        } for bs, ls in zip(boxes, labels)]
+        
+    targets = np.array(targets, dtype=dict)
+    
+    return targets
+
+
+
+def __collate(batch):
+    return list(zip(*batch))
+    
