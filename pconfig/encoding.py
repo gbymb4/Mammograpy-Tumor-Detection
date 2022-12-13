@@ -15,3 +15,5 @@ INBREAST_LABEL_ENCODING_SCHEME = {
     'distortion': 4
     # assymetry and pectoral muscles excluded
 }
+
+NUM_CLASSES = 5

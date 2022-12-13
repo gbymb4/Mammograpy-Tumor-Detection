@@ -47,7 +47,7 @@ class SSDOptimiser:
                 
                 targets = to_ssd_targets(boxes, labels, device=imgs[0].device)
                 
-                losses = self.model(imgs, targets)
+                losses, detections = self.model(imgs, targets)
                 
                 total_loss = losses['bbox_regression'] + losses['classification']
                 total_loss.backward()
@@ -72,7 +72,7 @@ class SSDOptimiser:
                     
                 targets = to_ssd_targets(boxes, labels, device=imgs[0].device)
                     
-                losses = self.model(imgs, targets)
+                losses, detections = self.model(imgs, targets)
                     
                 total_loss = losses['bbox_regression'] + losses['classification']
                 

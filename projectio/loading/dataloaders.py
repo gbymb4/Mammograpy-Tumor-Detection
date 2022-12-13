@@ -30,6 +30,7 @@ class ROIDataset(Dataset):
         bboxes = load_bboxes(dataset)
         
         encoding = c.INBREAST_LABEL_ENCODING_SCHEME
+        #num_classes = c.NUM_CLASSES
         
         all_boxes, all_labels = [], []
         for bbox_data in bboxes.values():
@@ -38,12 +39,15 @@ class ROIDataset(Dataset):
             
             boxes, labels = [], []
             for box, label in zip(elem_boxes, elem_labels):
-                label = label.lower()
+                label_str = label.lower()
                 
-                if label not in encoding.keys():
+                if label_str not in encoding.keys():
                     continue
                     
-                label = encoding[label]
+                label = encoding[label_str]
+                
+                #label = np.zeros(num_classes)
+                #label[encoding[label_str]] = 1
                 
                 boxes.append(box)
                 labels.append(label)
@@ -176,7 +180,8 @@ def to_ssd_targets(boxes, labels, ignore_labels=True, device='cpu'):
     if ignore_labels:
         targets = [{
             'boxes': bs,
-            'labels': torch.ones(len(ls)).type(torch.long).to(device)
+            'labels': torch.ones((len(ls),), dtype=torch.long).to(device)
+            #'labels': ls,
         } for bs, ls in zip(boxes, labels)]
     else:
         targets = [{
