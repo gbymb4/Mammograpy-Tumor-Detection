@@ -5,7 +5,7 @@ Created on Tue Dec 13 22:02:12 2022
 @author: Gavin
 """
 
-import os, torch
+import os, torch, time
 
 import numpy as np
 
@@ -30,3 +30,20 @@ def save_roi_training_hist(hist_tuple, save_dir):
     np.save(f'{save_dir}/train_detect_fracs', train_detect_fracs)
     np.save(f'{save_dir}/test_detect_fracs', test_detect_fracs)
     
+    
+    
+def save_roi_results(model, hist_tuple, dataset='inbreast', model_type='region_detectors'):
+    save_root_dir = 'out/{dataset.lower()}'
+    
+    if not os.path.isdir(save_root_dir):
+        os.mkdir(save_root_dir)
+        
+    save_parent_dir = f'{save_root_dir}/{model_type}'
+    
+    if not os.path.isdir(save_parent_dir):
+        os.mkdir(save_parent_dir)
+        
+    save_dir = f'{save_parent_dir}/{time.time()}'
+    
+    save_model(model, save_dir)
+    save_roi_training_hist(hist_tuple, save_dir)
