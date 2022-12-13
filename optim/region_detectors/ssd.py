@@ -27,6 +27,7 @@ class SSDOptimiser:
             optim = SGD(self.model.parameters(), **kwargs)
         
         train_losses, test_losses = [], []
+        train_detect_fracs, test_detect_fracs = [], []
         
         if verbose:
             print('#'*32)
@@ -39,6 +40,7 @@ class SSDOptimiser:
                 print(f'--executing epoch {epoch}...', end='')
             
             train_loss, test_loss = [], []
+            train_detect_frac, test_detect_frac = [], []
             
             for batch in self.train_loader:
                 imgs, boxes, labels = batch
@@ -48,6 +50,13 @@ class SSDOptimiser:
                 targets = to_ssd_targets(boxes, labels, device=imgs[0].device)
                 
                 losses, detections = self.model(imgs, targets)
+                
+                avg_detect_frac = self.__compute_avg_detect_frac(
+                    detections,
+                    boxes,
+                )
+                
+                train_detect_frac.append(avg_detect_frac)
                 
                 total_loss = losses['bbox_regression'] + losses['classification']
                 total_loss.backward()
@@ -63,6 +72,9 @@ class SSDOptimiser:
             
             train_losses.append(avg_train_loss)
             
+            avg_train_detect_frac = sum(train_detect_frac) / len(train_detect_frac)
+            train_detect_fracs.append(avg_train_detect_frac)
+            
             if verbose:
                 print(f'evaluated {len(train_loss)} train batches with avg_loss {avg_train_loss:.4f}')
                 print('-'*32)
@@ -73,6 +85,13 @@ class SSDOptimiser:
                 targets = to_ssd_targets(boxes, labels, device=imgs[0].device)
                     
                 losses, detections = self.model(imgs, targets)
+                
+                avg_detect_frac = self.__compute_avg_detect_frac(
+                    detections,
+                    boxes,
+                )
+                
+                test_detect_frac.append(avg_detect_frac)
                     
                 total_loss = losses['bbox_regression'] + losses['classification']
                 
@@ -85,6 +104,30 @@ class SSDOptimiser:
                 
             test_losses.append(avg_test_loss)
             
-        train_losses, test_losses = np.array(train_losses), np.array(test_losses)
+            avg_test_detect_frac = sum(test_detect_frac) / len(test_detect_frac)
+            test_detect_fracs.append(avg_test_detect_frac)
             
-        return train_losses, test_losses
+        train_losses, test_losses = np.array(train_losses), np.array(test_losses)
+        
+        train_detect_fracs = np.array(train_detect_fracs)
+        test_detect_fracs = np.array(test_detect_fracs)
+        
+        return train_losses, test_losses, train_detect_fracs, test_detect_fracs
+    
+    
+    
+    def __compute_avg_detect_frac(self, detections, boxes):
+        batch_fracs = []
+        
+        for detection, true_boxes in zip(detections, boxes):
+            pred_boxes = detection['boxes']
+            
+            detect_frac = len(true_boxes) / len(pred_boxes)
+            
+            batch_fracs.append(detect_frac)
+            
+        avg_frac = sum(batch_fracs) / len(batch_fracs)
+        
+        return avg_frac
+            
+            
