@@ -61,7 +61,7 @@ class SSDOptimiser:
                 total_loss = losses['bbox_regression'] + losses['classification']
                 total_loss.backward()
                 
-                train_loss.append((total_loss, len(imgs)))
+                train_loss.append((total_loss.item(), len(imgs)))
                 
                 optim.step()
                 
@@ -95,7 +95,7 @@ class SSDOptimiser:
                     
                 total_loss = losses['bbox_regression'] + losses['classification']
                 
-                test_loss.append((total_loss, len(imgs)))
+                test_loss.append((total_loss.item(), len(imgs)))
                 
             total_test_loss = sum([e[0] for e in test_loss])
             total_instances = sum([e[1] for e in test_loss])
