@@ -33,7 +33,7 @@ def save_roi_training_hist(hist_tuple, save_dir):
     
     
 def save_roi_results(model, hist_tuple, dataset='inbreast', model_type='region_detectors'):
-    save_root_dir = 'out/{dataset.lower()}'
+    save_root_dir = f'out/{dataset.lower()}'
     
     if not os.path.isdir(save_root_dir):
         os.mkdir(save_root_dir)
