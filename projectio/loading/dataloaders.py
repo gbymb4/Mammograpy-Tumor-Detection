@@ -130,7 +130,6 @@ def load_cross_validation_sets(
             dataset,
             batch_size=batch_size,
             sampler=train_sampler,
-            shuffle=True,
             generator=generator,
             collate_fn=__collate
         )
@@ -139,7 +138,6 @@ def load_cross_validation_sets(
             dataset,
             batch_size=batch_size,
             sampler=test_sampler,
-            shuffle=True,
             generator=generator,
             collate_fn=__collate
         )

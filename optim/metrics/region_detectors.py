@@ -9,8 +9,6 @@ import torch
 
 import numpy as np
 
-from copy import deepcopy
-
 def compute_tpr(detections, true_boxes, intersection_threshold=0.6):
     pred_boxes = detections['boxes']
     true_boxes = true_boxes.cpu().detach().tolist()
@@ -22,11 +20,17 @@ def compute_tpr(detections, true_boxes, intersection_threshold=0.6):
         iou_with_trues = []
         
         for true_box in true_boxes:
-            iou = jaccard_iou(pred_box, true_box)
+            iou = jaccard_iou(
+                pred_box.unsqueeze(0).detach(),
+                torch.Tensor(true_box).unsqueeze(0).detach()
+            )
 
             iou_with_trues.append(iou)
             
         iou_with_trues = np.array(iou_with_trues)
+        
+        if len(iou_with_trues) == 0:
+            break
         
         idx_max = iou_with_trues.argmax()
         max_iou = iou_with_trues[idx_max]
@@ -43,7 +47,7 @@ def compute_tpr(detections, true_boxes, intersection_threshold=0.6):
 
 
 def compute_fpr(detections, true_boxes, intersection_threshold=0.6):
-    pred_boxes = deepcopy(detections['boxes'])
+    pred_boxes = detections['boxes'].cpu().detach().tolist()
     true_boxes = true_boxes.cpu().detach().tolist()
     
     negatives = detections['trialed_boxes'] - len(true_boxes)
@@ -52,11 +56,17 @@ def compute_fpr(detections, true_boxes, intersection_threshold=0.6):
         iou_with_preds = []
         
         for pred_box in pred_boxes:
-            iou = jaccard_iou(pred_box, true_box)
+            iou = jaccard_iou(
+                torch.Tensor(pred_box).unsqueeze(0).detach(),
+                torch.Tensor(true_box).unsqueeze(0).detach()
+            )
 
             iou_with_preds.append(iou)
             
         iou_with_preds = np.array(iou_with_preds)
+        
+        if len(iou_with_preds) == 0:
+            break
         
         idx_max = iou_with_preds.argmax()
         max_iou = iou_with_preds[idx_max]
