@@ -13,8 +13,12 @@ def exec_optim_on_folds(
         optim_cls,
         optim_exec,
         folds,
-        device='cuda'
+        device='cuda',
+        ranking_metric=None,
     ):
+    
+    best_model = None
+    best_score = float('-inf')
     
     results = []
     for fold in folds:
@@ -25,13 +29,28 @@ def exec_optim_on_folds(
         optim = optim_cls(model, train, test)
         stats = optim.execute(**optim_exec)
         
+        score = ranking_metric(stats)
+        
+        if score > best_score:
+            best_model = model
+        
         results.append(stats)
         
     results = __avg_cv_metrics(results)
     
-    return results
+    return best_model, results
     
     
+    
+def plr_ranking(hist_dict):
+    tpr = hist_dict['test_tpr'][-1]
+    fpr = hist_dict['test_fpr'][-1]
+    
+    plr = tpr / fpr
+    
+    return plr
+    
+
     
 def __avg_cv_metrics(results_list):
     keys = results_list[0].keys()
@@ -46,3 +65,6 @@ def __avg_cv_metrics(results_list):
         avg_results_dict[key] = avg_scores
         
     return avg_results_dict
+
+
+

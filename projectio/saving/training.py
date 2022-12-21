@@ -19,20 +19,17 @@ def save_model(model, save_dir):
     
 
 
-def save_roi_training_hist(hist_tuple, save_dir):
+def save_roi_training_hist(hist_dict, save_dir):
     if not os.path.isdir(save_dir):
         os.mkdir(save_dir)
         
-    train_losses, test_losses, train_detect_fracs, test_detect_fracs = hist_tuple
-    
-    np.save(f'{save_dir}/train_losses', train_losses)
-    np.save(f'{save_dir}/test_losses', test_losses)
-    np.save(f'{save_dir}/train_detect_fracs', train_detect_fracs)
-    np.save(f'{save_dir}/test_detect_fracs', test_detect_fracs)
+    for key, value in hist_dict.items():    
+        np.save(f'{save_dir}/{key}.npy', value)
     
     
     
-def save_roi_results(model, hist_tuple, dataset='inbreast', model_type='region_detectors'):
+    
+def save_roi_results(model, hist_dict, dataset='inbreast', model_type='region_detectors'):
     save_root_dir = f'out/{dataset.lower()}'
     
     if not os.path.isdir(save_root_dir):
@@ -46,4 +43,4 @@ def save_roi_results(model, hist_tuple, dataset='inbreast', model_type='region_d
     save_dir = f'{save_parent_dir}/{time.time()}'
     
     save_model(model, save_dir)
-    save_roi_training_hist(hist_tuple, save_dir)
+    save_roi_training_hist(hist_dict, save_dir)
