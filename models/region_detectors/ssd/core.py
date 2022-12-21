@@ -198,6 +198,7 @@ class GeneralSSD(SSD, ABC):
                     "boxes": image_boxes[keep],
                     "scores": image_scores[keep],
                     "labels": image_labels[keep],
+                    "trialed_boxes": head_outputs['cls_logits'].shape[1]
                 }
             )
         return detections

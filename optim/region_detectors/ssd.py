@@ -42,6 +42,8 @@ class SSDOptimiser:
             train_loss, test_loss = [], []
             train_detect_frac, test_detect_frac = [], []
             
+            self.model.train()
+            
             for batch in self.train_loader:
                 imgs, boxes, labels = batch
                 
@@ -78,6 +80,8 @@ class SSDOptimiser:
             if verbose:
                 print(f'evaluated {len(train_loss)} train batches with avg_loss {avg_train_loss:.4f}')
                 print('-'*32)
+                
+            self.model.eval()
                 
             for batch in self.test_loader:
                 imgs, boxes, labels = batch
@@ -122,7 +126,7 @@ class SSDOptimiser:
         for detection, true_boxes in zip(detections, boxes):
             pred_boxes = detection['boxes']
             
-            detect_frac = len(true_boxes) / len(pred_boxes)
+            detect_frac = len(pred_boxes) / len(true_boxes)
             
             batch_fracs.append(detect_frac)
             

@@ -13,11 +13,12 @@ import pconfig as c
 from .images import load_preprocessed_images
 from .bboxes import load_bboxes
 
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import DataLoader, Dataset, SubsetRandomSampler
+from sklearn.model_selection import KFold
 
 class ROIDataset(Dataset):
     
-    def __init__(self, dataset, device='cpu', filter_empty_imgs=True):
+    def __init__(self, dataset, device='cpu', filter_empty_imgs=True, bbox_min_size=7):
         super().__init__()
         
         imgs, _ = load_preprocessed_images(dataset)
@@ -30,7 +31,6 @@ class ROIDataset(Dataset):
         bboxes = load_bboxes(dataset)
         
         encoding = c.INBREAST_LABEL_ENCODING_SCHEME
-        #num_classes = c.NUM_CLASSES
         
         all_boxes, all_labels = [], []
         for bbox_data in bboxes.values():
@@ -43,11 +43,11 @@ class ROIDataset(Dataset):
                 
                 if label_str not in encoding.keys():
                     continue
+                
+                if bbox_lt_min(box, bbox_min_size):
+                    continue
                     
                 label = encoding[label_str]
-                
-                #label = np.zeros(num_classes)
-                #label[encoding[label_str]] = 1
                 
                 boxes.append(box)
                 labels.append(label)
@@ -103,6 +103,50 @@ class ROIDataset(Dataset):
         labels = self.labels[idx]
         
         return imgs, boxes, labels
+
+
+
+def load_cross_validation_sets(
+        dataset_name,
+        seed=0,
+        device='cpu',
+        batch_size=1,
+        folds=5,
+        **kwargs
+    ):
+    
+    generator = torch.Generator().manual_seed(seed)
+    
+    splits = KFold(n_splits=folds, shuffle=True, random_state=seed)
+    
+    dataset = ROIDataset(dataset_name, device=device, **kwargs)
+
+    all_folds = []
+    for fold, (train_idx, val_idx) in enumerate(splits.split(np.arange(len(dataset)))):
+        train_sampler = SubsetRandomSampler(train_idx)
+        test_sampler = SubsetRandomSampler(val_idx)
+        
+        train_loader = DataLoader(
+            dataset,
+            batch_size=batch_size,
+            sampler=train_sampler,
+            shuffle=True,
+            generator=generator,
+            collate_fn=__collate
+        )
+        
+        test_loader = DataLoader(
+            dataset,
+            batch_size=batch_size,
+            sampler=test_sampler,
+            shuffle=True,
+            generator=generator,
+            collate_fn=__collate
+        )
+        
+        all_folds.append((train_loader, test_loader))
+        
+    return all_folds
 
         
 
@@ -167,9 +211,11 @@ def load_train_test_datasets_only(
     train_dataset, test_dataset = torch.\
         utils.\
         data.\
-        random_split(dataset,
-                     [train_samples, test_samples],
-                     generator=generator)
+        random_split(
+            dataset,
+            [train_samples, test_samples],
+            generator=generator
+        )
         
     
     return train_dataset, test_dataset
@@ -181,7 +227,6 @@ def to_ssd_targets(boxes, labels, ignore_labels=True, device='cpu'):
         targets = [{
             'boxes': bs,
             'labels': torch.ones((len(ls),), dtype=torch.long).to(device)
-            #'labels': ls,
         } for bs, ls in zip(boxes, labels)]
     else:
         targets = [{
@@ -195,6 +240,13 @@ def to_ssd_targets(boxes, labels, ignore_labels=True, device='cpu'):
 
 
 
+def bbox_lt_min(bbox, bbox_min):
+    min_dim = min([bbox[2] - bbox[0], bbox[3] - bbox[1]])
+    
+    return min_dim < bbox_min
+
+
+
 def __collate(batch):
     return list(zip(*batch))
-    
+
