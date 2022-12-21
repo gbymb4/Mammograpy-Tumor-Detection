@@ -40,7 +40,7 @@ def save_roi_results(model, hist_dict, dataset='inbreast', model_type='region_de
     if not os.path.isdir(save_parent_dir):
         os.mkdir(save_parent_dir)
         
-    save_dir = f'{save_parent_dir}/{time.time()}'
+    save_dir = f'{save_parent_dir}/{int(time.time())}'
     
     save_model(model, save_dir)
     save_roi_training_hist(hist_dict, save_dir)
