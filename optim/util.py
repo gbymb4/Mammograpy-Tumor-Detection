@@ -60,7 +60,7 @@ def __avg_cv_metrics(results_list):
         metric_scores = [results_list[i][key] for i in range(len(results_list))]
         metric_scores = np.array(metric_scores)
         
-        avg_scores = metric_scores.mean(axis=1)
+        avg_scores = metric_scores.mean(axis=0)
         
         avg_results_dict[key] = avg_scores
         
