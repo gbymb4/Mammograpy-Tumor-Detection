@@ -53,7 +53,7 @@ def __add_non_learnable_params_to_state_dict(model):
     non_learnable_params = {}
     
     for name, param in model.named_parameters():
-        if not param.requiresGrad:
+        if not param.requires_grad:
             non_learnable_params[name] = param.data
             
     model.state_dict().update(non_learnable_params)
