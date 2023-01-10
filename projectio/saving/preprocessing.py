@@ -15,6 +15,9 @@ def save_preprocessed_images(imgs, names, dataset):
     
     if dataset.lower() == 'inbreast':
         data_dir = c.PREPROCESSED_INBREAST_DIR
+        
+    elif dataset.lower() == 'mias':
+        data_dir = c.PREPROCESSED_MIAS_DIR
        
     save_imgs_dir = f'{data_dir}/imgs' 
        
@@ -41,5 +44,28 @@ def save_rois(coords, dataset):
     
     with open(fname, 'w') as file:
         json.dump(coords, file)
+        
+        file.close()
+        
+
+
+def save_bboxes(bboxes, dataset):
+    data_dir = None
+    
+    if dataset.lower() == 'inbreast':
+        data_dir = c.PREPROCESSED_INBREAST_DIR
+        
+    elif dataset.lower() == 'mias':
+        data_dir = c.PREPROCESSED_MIAS_DIR
+        
+    save_rois_dir = f'{data_dir}/bboxes' 
+    
+    if not os.path.exists(save_rois_dir):
+        os.mkdir(save_rois_dir)
+        
+    fname = f'{save_rois_dir}/bboxes.json'
+    
+    with open(fname, 'w') as file:
+        json.dump(bboxes, file)
         
         file.close()

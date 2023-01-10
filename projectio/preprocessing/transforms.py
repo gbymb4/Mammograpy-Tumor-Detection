@@ -50,11 +50,15 @@ class MakeSquare:
             else:
                 delta = w - h
                 
-                img = img[h, delta:]
+                img = img[:, delta:]
                 
                 if self.transform_tracker is not None:
                     self.transform_tracker.append(('horiz_right', delta))
-                
+        
+        else:
+            if self.transform_tracker is not None:
+                self.transform_tracker.append(('none', 0))
+                 
         return img
                 
     def __is_left(self, img):

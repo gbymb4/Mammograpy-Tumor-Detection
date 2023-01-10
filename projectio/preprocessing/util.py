@@ -27,8 +27,8 @@ def adapt_transformed_coords(
                     recentered = list(
                         map(
                             lambda x: (
-                                x[0],
-                                x[1] + recenter_coef
+                                x[0] + recenter_coef,
+                                x[1] 
                             ), 
                             roi_points
                         )
@@ -43,8 +43,8 @@ def adapt_transformed_coords(
                     recentered = list(
                         map(
                             lambda x: (
-                                x[0],
-                                x[1] - recenter_coef
+                                x[0] - recenter_coef,
+                                x[1]
                             ), 
                             roi_points
                         )
@@ -79,6 +79,73 @@ def adapt_transformed_coords(
 
 
 
+def adapt_transformed_bboxes(
+        rois,
+        recenter_tracker=None,
+        rescale_tracker=None,
+    ):
+    
+    if recenter_tracker is not None:
+        
+        for roi_data, recenter_record in zip(rois.values(), recenter_tracker):
+            action, recenter_coef = recenter_record
+            
+            new_roi_points = []
+            for roi_points in roi_data['bboxes']:    
+                
+                if action == 'vert_left':
+                    new_roi_points.append(roi_points)
+                    
+                elif action == 'vert_right':
+                    recentered = [
+                        roi_points[0] + recenter_coef,
+                        roi_points[1],
+                        roi_points[2] + recenter_coef,
+                        roi_points[3]
+                    ]
+                    
+                    new_roi_points.append(recentered)
+                    
+                elif action == 'horiz_left': 
+                    new_roi_points.append(roi_points)
+                
+                elif action == 'horiz_right':
+                    recentered = [
+                        roi_points[0] - recenter_coef,
+                        roi_points[1],
+                        roi_points[2] - recenter_coef,
+                        roi_points[3]
+                    ]
+                    
+                    new_roi_points.append(recentered)
+                    
+                elif action == 'none':
+                    new_roi_points.append(roi_points)
+                    
+            roi_data['bboxes'] = new_roi_points
+            
+    if rescale_tracker is not None:
+        for roi_data, rescale_record in zip(rois.values(), rescale_tracker):
+            _, rescale_coefs = rescale_record
+            
+            new_roi_points = []
+            for roi_points in roi_data['bboxes']:
+                
+                rescaled = [
+                    roi_points[0] * rescale_coefs[0],
+                    roi_points[1] * rescale_coefs[1],
+                    roi_points[2] * rescale_coefs[0],
+                    roi_points[3] * rescale_coefs[1]
+                ]
+                
+                new_roi_points.append(rescaled)
+        
+            roi_data['bboxes'] = new_roi_points
+            
+    return rois
+
+
+
 def compute_bounding_boxes(rois):
     for roi_data in rois.values():
         
@@ -108,25 +175,28 @@ def compute_bounding_boxes(rois):
                 x1, x2 = w_min, w_max
                 y1, y2 = h_min, h_max
                 
-            bboxes.append([x1, y1, x2, y2])
+            # x and y are backwards - the easiest fix is just flipping them
+            bboxes.append([y1, x1, y2, x2])
             
         roi_data['bboxes'] = bboxes
         
     return rois
         
         
+    
+def infer_bounding_boxes(names, centers, radii):
+    bboxes = []
+    
+    for center, radius in zip(centers, radii):
+        x, y = center
         
+        x_min, x_max = x - radius, x + radius
+        y_min, y_max = y - radius, y + radius
         
+        bbox = [x_min, y_min, x_max, y_max]
         
+        bboxes.append(bbox)
         
+    ans = {name: {'bboxes': [bbox]} for name, bbox in zip(names, bboxes)}
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
+    return ans

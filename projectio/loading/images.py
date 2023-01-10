@@ -34,6 +34,7 @@ def load_dicom_mammogram(fname, transforms=None, stack_transforms=None):
             channels.append(transformed)
 
         img = np.array(channels)
+        img = np.swapaxes(img, 1, 2)
     
     return img, name
 
@@ -54,6 +55,58 @@ def load_dicom_mammograms(dataset, load_limit=None, **kwargs):
         img_fnames = img_fnames[:load_limit]
     
     loaded = [load_dicom_mammogram(fname, **kwargs) for fname in img_fnames]
+    
+    imgs = np.array([l[0] for l in loaded])
+    names = np.array([l[1] for l in loaded])
+    
+    return imgs, names
+
+
+
+def load_pgm_mammogram(fname, transforms=None, stack_transforms=None):
+    img = cv2.imread(fname, -1)
+    img = cv2.normalize(img,  None, 0, 255, cv2.NORM_MINMAX)
+    
+    name = Path(fname).name.split('_')[0]
+    
+    if transforms is not None:
+        for transform in transforms:
+            img = transform(img)
+    
+    if stack_transforms is not None:
+        channels = [img]
+        
+        for transform in stack_transforms:
+            transformed = transform(img)
+            transformed = cv2.normalize(transformed,  None, 0, 255, cv2.NORM_MINMAX)
+            
+            channels.append(transformed)
+
+        img = np.array(channels)
+    
+    return img, name
+
+
+
+def load_pgm_mammograms(dataset, load_limit=None, load_order=None, **kwargs):
+    data_dir = None
+    
+    if dataset.lower() == 'mias':
+        data_dir = f'{c.MIAS_DIR}'
+    
+    if load_order is not None:
+        img_fnames = [f'{data_dir}/{refnum}.pgm' for refnum in load_order]
+        
+    else:
+        img_fnames = os.listdir(data_dir)
+        img_fnames = list(filter(lambda x: '.pgm' in x, img_fnames))
+        img_fnames = list(map(lambda x: f'{data_dir}/' + x, img_fnames))
+        img_fnames = sorted(img_fnames, key=lambda x: int(Path(x).name.split('_')[0]))
+    
+    if load_limit is not None:
+        img_fnames = img_fnames[:load_limit]
+    
+    loaded = [load_pgm_mammogram(fname, **kwargs) for fname in img_fnames]
     
     imgs = np.array([l[0] for l in loaded])
     names = np.array([l[1] for l in loaded])

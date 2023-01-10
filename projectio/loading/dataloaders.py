@@ -24,7 +24,7 @@ class ROIDataset(Dataset):
         imgs, _ = load_preprocessed_images(dataset)
         
         imgs = imgs.astype(float) / 255.0
-        imgs = np.swapaxes(imgs, 2, 3)
+        #imgs = np.swapaxes(imgs, 2, 3)
         imgs = torch.from_numpy(imgs).float()
         imgs = imgs.to(device)
         

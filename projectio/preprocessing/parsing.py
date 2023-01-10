@@ -12,7 +12,7 @@ from bs4 import BeautifulSoup
 
 import pconfig as c
 import numpy as np
-
+import pandas as pd
 
 def parse_inbreast_xml(fname, cull_singles=True):
     rois_data = {'classes': [], 'coords': []}
@@ -84,5 +84,31 @@ def parse_inbreast_xmls(img_names, load_limit=None, **kwargs):
     names = np.array([Path(fname).name.split('.')[0] for fname in xml_fnames])
     
     parsed = {name: parse_inbreast_xml(fname, **kwargs) for name, fname in zip(names, xml_fnames)}
+    
+    return parsed
+
+
+
+def parse_mias_info(load_limit=None, cull_no_rad=True):
+    fname = f'{c.MIAS_DIR}/Info.txt'
+    
+    with open(fname, 'r') as file:
+        content = file.readlines()
+
+        file.close()
+        
+    col_names = content[0].strip().split()
+    
+    data = content[1:]
+    
+    if load_limit is not None:
+        data = data[:load_limit]
+    
+    rows = list(map(str.split, data))
+    
+    parsed = pd.DataFrame(rows, columns=col_names)
+    
+    if cull_no_rad:
+        parsed = parsed.dropna()
     
     return parsed
