@@ -104,9 +104,10 @@ class RandomScale(object):
         
     """
 
-    def __init__(self, scale = 0.2, diff = False):
+    def __init__(self, scale = 0.2, diff = False, p=0.5):
         self.scale = scale
-
+        
+        self.p = p
         
         if type(self.scale) == tuple:
             assert len(self.scale) == 2, "Invalid range"
@@ -121,40 +122,40 @@ class RandomScale(object):
         
 
     def __call__(self, img, bboxes):
-    
+        if random.random() < self.p:
         
-        #Chose a random digit to scale by 
-        
-        img_shape = img.shape
-        
-        if self.diff:
-            scale_x = random.uniform(*self.scale)
-            scale_y = random.uniform(*self.scale)
-        else:
-            scale_x = random.uniform(*self.scale)
-            scale_y = scale_x
+            #Chose a random digit to scale by 
             
-    
+            img_shape = img.shape
+            
+            if self.diff:
+                scale_x = random.uniform(*self.scale)
+                scale_y = random.uniform(*self.scale)
+            else:
+                scale_x = random.uniform(*self.scale)
+                scale_y = scale_x
+                
         
-        resize_scale_x = 1 + scale_x
-        resize_scale_y = 1 + scale_y
-        
-        img=  cv2.resize(img, None, fx = resize_scale_x, fy = resize_scale_y)
-        
-        bboxes[:,:4] *= [resize_scale_x, resize_scale_y, resize_scale_x, resize_scale_y]
-        
-        
-        
-        canvas = np.zeros(img_shape, dtype = np.uint8)
-        
-        y_lim = int(min(resize_scale_y,1)*img_shape[0])
-        x_lim = int(min(resize_scale_x,1)*img_shape[1])
-        
-        
-        canvas[:y_lim,:x_lim,:] =  img[:y_lim,:x_lim,:]
-        
-        img = canvas
-        bboxes = clip_box(bboxes, [0,0,1 + img_shape[1], img_shape[0]], 0.25)
+            
+            resize_scale_x = 1 + scale_x
+            resize_scale_y = 1 + scale_y
+            
+            img=  cv2.resize(img, None, fx = resize_scale_x, fy = resize_scale_y)
+            
+            bboxes[:,:4] *= [resize_scale_x, resize_scale_y, resize_scale_x, resize_scale_y]
+            
+            
+            
+            canvas = np.zeros(img_shape, dtype = np.uint8)
+            
+            y_lim = int(min(resize_scale_y,1)*img_shape[0])
+            x_lim = int(min(resize_scale_x,1)*img_shape[1])
+            
+            
+            canvas[:y_lim,:x_lim,:] =  img[:y_lim,:x_lim,:]
+            
+            img = canvas
+            bboxes = clip_box(bboxes, [0,0,1 + img_shape[1], img_shape[0]], 0.25)
     
     
         return img, bboxes
@@ -253,8 +254,10 @@ class RandomTranslate(object):
         
     """
 
-    def __init__(self, translate = 0.2, diff = False):
+    def __init__(self, translate = 0.2, diff = False, p=0.5):
         self.translate = translate
+        
+        self.p = p
         
         if type(self.translate) == tuple:
             assert len(self.translate) == 2, "Invalid range"  
@@ -269,45 +272,43 @@ class RandomTranslate(object):
             
         self.diff = diff
 
-    def __call__(self, img, bboxes):        
-        #Chose a random digit to scale by 
-        img_shape = img.shape
+    def __call__(self, img, bboxes):  
+        if random.random() < self.p:
         
-        #translate the image
-        
-        #percentage of the dimension of the image to translate
-        translate_factor_x = random.uniform(*self.translate)
-        translate_factor_y = random.uniform(*self.translate)
-        
-        if not self.diff:
-            translate_factor_y = translate_factor_x
+            #Chose a random digit to scale by 
+            img_shape = img.shape
             
-        canvas = np.zeros(img_shape).astype(np.uint8)
-    
-    
-        corner_x = int(translate_factor_x*img.shape[1])
-        corner_y = int(translate_factor_y*img.shape[0])
+            #translate the image
+            
+            #percentage of the dimension of the image to translate
+            translate_factor_x = random.uniform(*self.translate)
+            translate_factor_y = random.uniform(*self.translate)
+            
+            if not self.diff:
+                translate_factor_y = translate_factor_x
+                
+            canvas = np.zeros(img_shape).astype(np.uint8)
         
         
+            corner_x = int(translate_factor_x*img.shape[1])
+            corner_y = int(translate_factor_y*img.shape[0])
+            
+            
+            
+            #change the origin to the top-left corner of the translated box
+            orig_box_cords =  [max(0,corner_y), max(corner_x,0), min(img_shape[0], corner_y + img.shape[0]), min(img_shape[1],corner_x + img.shape[1])]
         
-        #change the origin to the top-left corner of the translated box
-        orig_box_cords =  [max(0,corner_y), max(corner_x,0), min(img_shape[0], corner_y + img.shape[0]), min(img_shape[1],corner_x + img.shape[1])]
-    
+            
+            
         
-        
-    
-        mask = img[max(-corner_y, 0):min(img.shape[0], -corner_y + img_shape[0]), max(-corner_x, 0):min(img.shape[1], -corner_x + img_shape[1]),:]
-        canvas[orig_box_cords[0]:orig_box_cords[2], orig_box_cords[1]:orig_box_cords[3],:] = mask
-        img = canvas
-        
-        bboxes[:,:4] += [corner_x, corner_y, corner_x, corner_y]
-        
-        
-        bboxes = clip_box(bboxes, [0,0,img_shape[1], img_shape[0]], 0.25)
-        
-    
-        
-    
+            mask = img[max(-corner_y, 0):min(img.shape[0], -corner_y + img_shape[0]), max(-corner_x, 0):min(img.shape[1], -corner_x + img_shape[1]),:]
+            canvas[orig_box_cords[0]:orig_box_cords[2], orig_box_cords[1]:orig_box_cords[3],:] = mask
+            img = canvas
+            
+            bboxes[:,:4] += [corner_x, corner_y, corner_x, corner_y]
+            
+            
+            bboxes = clip_box(bboxes, [0,0,img_shape[1], img_shape[0]], 0.25)
         
         return img, bboxes
     
@@ -418,8 +419,10 @@ class RandomRotate(object):
         
     """
 
-    def __init__(self, angle = 10):
+    def __init__(self, angle = 10, p=0.5):
         self.angle = angle
+        
+        self.p = p
         
         if type(self.angle) == tuple:
             assert len(self.angle) == 2, "Invalid range"  
@@ -428,35 +431,36 @@ class RandomRotate(object):
             self.angle = (-self.angle, self.angle)
             
     def __call__(self, img, bboxes):
+        if random.random() < self.p:
     
-        angle = random.uniform(*self.angle)
-    
-        w,h = img.shape[1], img.shape[0]
-        cx, cy = w//2, h//2
-    
-        img = rotate_im(img, angle)
-    
-        corners = get_corners(bboxes)
-    
-        corners = np.hstack((corners, bboxes[:,4:]))
-    
-    
-        corners[:,:8] = rotate_box(corners[:,:8], angle, cx, cy, h, w)
-    
-        new_bbox = get_enclosing_box(corners)
-    
-    
-        scale_factor_x = img.shape[1] / w
-    
-        scale_factor_y = img.shape[0] / h
-    
-        img = cv2.resize(img, (w,h))
-    
-        new_bbox[:,:4] /= [scale_factor_x, scale_factor_y, scale_factor_x, scale_factor_y] 
-    
-        bboxes  = new_bbox
-    
-        bboxes = clip_box(bboxes, [0,0,w, h], 0.25)
+            angle = random.uniform(*self.angle)
+        
+            w,h = img.shape[1], img.shape[0]
+            cx, cy = w//2, h//2
+        
+            img = rotate_im(img, angle)
+        
+            corners = get_corners(bboxes)
+        
+            corners = np.hstack((corners, bboxes[:,4:]))
+        
+        
+            corners[:,:8] = rotate_box(corners[:,:8], angle, cx, cy, h, w)
+        
+            new_bbox = get_enclosing_box(corners)
+        
+        
+            scale_factor_x = img.shape[1] / w
+        
+            scale_factor_y = img.shape[0] / h
+        
+            img = cv2.resize(img, (w,h))
+        
+            new_bbox[:,:4] /= [scale_factor_x, scale_factor_y, scale_factor_x, scale_factor_y] 
+        
+            bboxes  = new_bbox
+        
+            bboxes = clip_box(bboxes, [0,0,w, h], 0.25)
     
         return img, bboxes
 
@@ -653,6 +657,61 @@ class Shear(object):
         
         if shear_factor < 0:
              img, bboxes = HorizontalFlip()(img, bboxes)
+             
+        
+        return img, bboxes
+    
+    
+    
+class RandomShear(object):
+    """Shears an image in horizontal direction   
+    
+    
+    Bounding boxes which have an area of less than 25% in the remaining in the 
+    transformed image is dropped. The resolution is maintained, and the remaining
+    area if any is filled by black color.
+    
+    Parameters
+    ----------
+    shear_factor: float
+        Factor by which the image is sheared in the x-direction
+       
+    Returns
+    -------
+    
+    numpy.ndaaray
+        Sheared image in the numpy format of shape `HxWxC`
+    
+    numpy.ndarray
+        Tranformed bounding box co-ordinates of the format `n x 4` where n is 
+        number of bounding boxes and 4 represents `x1,y1,x2,y2` of the box
+        
+    """
+
+    def __init__(self, shear_factor = 0.2, p=0.5):
+        self.shear_factor = shear_factor
+        
+        self.p = p
+    
+    def __call__(self, img, bboxes):
+        if random.random() < self.p:
+        
+            shear_factor = self.shear_factor
+            if shear_factor < 0:
+                img, bboxes = HorizontalFlip()(img, bboxes)
+    
+            
+            M = np.array([[1, abs(shear_factor), 0],[0,1,0]])
+                    
+            nW =  img.shape[1] + abs(shear_factor*img.shape[0])
+            
+            bboxes[:,[0,2]] += ((bboxes[:,[1,3]])*abs(shear_factor)).astype(int) 
+            
+    
+            img = cv2.warpAffine(img, M, (int(nW), img.shape[0]))
+            
+            if shear_factor < 0:
+                 img, bboxes = HorizontalFlip()(img, bboxes)
              
         
         return img, bboxes

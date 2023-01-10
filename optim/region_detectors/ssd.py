@@ -5,6 +5,8 @@ Created on Mon Dec 12 17:58:17 2022
 @author: Gavin
 """
 
+import torch
+
 import numpy as np
 
 from torch.optim import SGD
@@ -21,7 +23,14 @@ class SSDOptimiser:
         
     
     
-    def execute(self, epochs=1000, verbose=True, **kwargs):
+    def execute(
+            self,
+            epochs=1000,
+            verbose=True,
+            augmentation_callbacks=None,
+            **kwargs
+        ):
+        
         if len(kwargs) == 0:
             optim = SGD(self.model.parameters(), lr=1e-3, momentum=0.9, weight_decay=5e-4)
         else:
@@ -51,6 +60,13 @@ class SSDOptimiser:
             
             for batch in self.train_loader:
                 imgs, boxes, labels = batch
+                
+                if augmentation_callbacks is not None:
+                    imgs, boxes = self.__augment(
+                        imgs,
+                        boxes,
+                        augmentation_callbacks
+                    )
                 
                 optim.zero_grad()
                 
@@ -168,5 +184,34 @@ class SSDOptimiser:
         avg_frac = sum(batch_fracs) / len(batch_fracs)
         
         return avg_frac
+    
+    
+    
+    def __augment(self, imgs, boxes, callbacks):
+        new_imgs, new_boxes = [], []
+        
+        device = imgs[0].device
+        
+        img_shape = imgs[0].shape
+        
+        for img, img_boxes in zip(imgs, boxes):
+            temp_img = np.swapaxes(img.cpu().numpy(), 0, 2)
+            temp_boxes = img_boxes.cpu().numpy()
+            
+            for callback in callbacks:
+                temp_img, temp_boxes = callback(temp_img, temp_boxes)
+                
+                if len(temp_img.shape) != 3:
+                    temp_img = temp_img[:img_shape[2], :img_shape[1], np.newaxis]
+                
+            temp_img = np.swapaxes(temp_img, 0, 2) 
+            temp_img = torch.from_numpy(temp_img.copy()).float().to(device)
+            
+            temp_boxes = torch.from_numpy(temp_boxes.copy()).float().to(device)
+                
+            new_imgs.append(temp_img)
+            new_boxes.append(temp_boxes)
+            
+        return new_imgs, new_boxes
             
             

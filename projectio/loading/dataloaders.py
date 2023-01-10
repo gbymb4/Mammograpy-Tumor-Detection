@@ -18,7 +18,14 @@ from sklearn.model_selection import KFold
 
 class ROIDataset(Dataset):
     
-    def __init__(self, dataset, device='cpu', filter_empty_imgs=True, bbox_min_size=7):
+    def __init__(
+            self,
+            dataset,
+            device='cpu', 
+            filter_empty_imgs=True,
+            bbox_min_size=7,
+        ):
+
         super().__init__()
         
         imgs, _ = load_preprocessed_images(dataset)
