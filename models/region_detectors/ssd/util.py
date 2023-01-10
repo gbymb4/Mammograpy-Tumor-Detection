@@ -65,7 +65,7 @@ def _fmap_base(highres=True):
 
 
 
-def vgg_fmap_extractor(backbone):
+def vgg_fmap_extractor(backbone, trainable_backbone=False):
     backbone = backbone.features
     
     # below implementation is from torchvision.models.detection source
@@ -77,9 +77,10 @@ def vgg_fmap_extractor(backbone):
 
     features = nn.Sequential(*backbone[:maxpool4_pos])  
 
-    for module in features:
-        for param in module.parameters():
-            param.requires_grad = False
+    if not trainable_backbone:
+        for module in features:
+            for param in module.parameters():
+                param.requires_grad = False
 
     extra = _fmap_base()
 
@@ -105,7 +106,7 @@ def vgg_fmap_extractor(backbone):
     
 
 
-def resnet_fmap_extractor(backbone):
+def resnet_fmap_extractor(backbone, trainable_backbone=False):
     backbone = backbone._modules
     
     feature_keys = list(backbone.keys())
@@ -118,9 +119,10 @@ def resnet_fmap_extractor(backbone):
     final_bottleneck.conv2.stride = (1, 1)
     final_bottleneck.downsample[0].stride = (1, 1)
     
-    for module in features:
-        for param in module.parameters():
-            param.requires_grad = False
+    if not trainable_backbone:
+        for module in features:
+            for param in module.parameters():
+                param.requires_grad = False
     
     extra = _fmap_base()
     
@@ -140,12 +142,13 @@ def resnet_fmap_extractor(backbone):
     
 
 
-def efficientnet_fmap_extractor(backbone):
+def efficientnet_fmap_extractor(backbone, trainable_backbone=False):
     features = backbone._modules['features']
     
-    for module in features:
-        for param in module.parameters():
-            param.requires_grad = False
+    if not trainable_backbone:
+        for module in features:
+            for param in module.parameters():
+                param.requires_grad = False
             
     extra = _fmap_base()
     
@@ -167,12 +170,13 @@ def efficientnet_fmap_extractor(backbone):
 
 
 
-def mobilenet_fmap_extractor(backbone):
+def mobilenet_fmap_extractor(backbone, trainable_backbone=False):
     features = backbone._modules['features']
     
-    for module in features:
-        for param in module.parameters():
-            param.requires_grad = False
+    if not trainable_backbone:
+        for module in features:
+            for param in module.parameters():
+                param.requires_grad = False
             
     extra = _fmap_base()
     
