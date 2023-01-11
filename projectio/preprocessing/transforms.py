@@ -103,8 +103,25 @@ class CannyEdges:
         self.kwargs = kwargs
         
     def __call__(self, img):
-        img = img * 255
-        
         return pcv.canny_edge_detect(img, *self.args, **self.kwargs)
+    
+    
+
+class BreastMasking:
+    
+    def __init__(self, threshold=10, contour_level=0):
+        self.threshold = threshold
+        self.contour_level = contour_level
+    
+    def __call__(self, img):
+        ksize = tuple((np.array(img.shape) / 10).astype(int))
         
+        img_temp = cv2.blur(img, ksize)
+        img_temp = cv2.normalize(img_temp, None, 0, 255, cv2.NORM_MINMAX)
         
+        _, mask = cv2.threshold(img_temp, self.threshold, 255, cv2.THRESH_BINARY)
+        
+        img = img * mask
+        
+        return img
+    

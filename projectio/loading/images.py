@@ -63,9 +63,18 @@ def load_dicom_mammograms(dataset, load_limit=None, **kwargs):
 
 
 
-def load_pgm_mammogram(fname, transforms=None, stack_transforms=None):
+def load_pgm_mammogram(fname, is_mias=False, transforms=None, stack_transforms=None):
     img = cv2.imread(fname, -1)
     img = cv2.normalize(img,  None, 0, 255, cv2.NORM_MINMAX)
+    
+    if is_mias:
+        left = fname[-6] == 'l'
+        
+        if left:
+            img = cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE)
+        
+        else:
+            img = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
     
     name = Path(fname).name.split('_')[0]
     
@@ -83,6 +92,7 @@ def load_pgm_mammogram(fname, transforms=None, stack_transforms=None):
             channels.append(transformed)
 
         img = np.array(channels)
+        img = np.swapaxes(img, 1, 2)
     
     return img, name
 
@@ -90,9 +100,11 @@ def load_pgm_mammogram(fname, transforms=None, stack_transforms=None):
 
 def load_pgm_mammograms(dataset, load_limit=None, load_order=None, **kwargs):
     data_dir = None
+    is_mias = False
     
     if dataset.lower() == 'mias':
         data_dir = f'{c.MIAS_DIR}'
+        is_mias = True
     
     if load_order is not None:
         img_fnames = [f'{data_dir}/{refnum}.pgm' for refnum in load_order]
@@ -106,7 +118,7 @@ def load_pgm_mammograms(dataset, load_limit=None, load_order=None, **kwargs):
     if load_limit is not None:
         img_fnames = img_fnames[:load_limit]
     
-    loaded = [load_pgm_mammogram(fname, **kwargs) for fname in img_fnames]
+    loaded = [load_pgm_mammogram(fname, is_mias=is_mias, **kwargs) for fname in img_fnames]
     
     imgs = np.array([l[0] for l in loaded])
     names = np.array([l[1] for l in loaded])
