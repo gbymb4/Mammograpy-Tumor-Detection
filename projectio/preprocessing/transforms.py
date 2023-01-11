@@ -109,12 +109,12 @@ class CannyEdges:
 
 class BreastMasking:
     
-    def __init__(self, threshold=10, contour_level=0):
+    def __init__(self, threshold=10, blur_scaling=10):
         self.threshold = threshold
-        self.contour_level = contour_level
+        self.blur_scaling = blur_scaling
     
     def __call__(self, img):
-        ksize = tuple((np.array(img.shape) / 10).astype(int))
+        ksize = tuple((np.array(img.shape) / self.blur_scaling).astype(int))
         
         img_temp = cv2.blur(img, ksize)
         img_temp = cv2.normalize(img_temp, None, 0, 255, cv2.NORM_MINMAX)
