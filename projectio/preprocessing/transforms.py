@@ -12,6 +12,8 @@ import numpy as np
 
 from plantcv import plantcv as pcv
 from scipy.ndimage import center_of_mass
+from scipy.ndimage import label
+from scipy.ndimage import binary_erosion, binary_dilation
 
 class MakeSquare:
     
@@ -124,4 +126,52 @@ class BreastMasking:
         img = img * mask
         
         return img
+    
+    
+
+class LargestRegionMasking:
+    
+    def __init__(self, blur_scaling=50, iterations=50):
+        self.blur_scaling = blur_scaling
+        self.iterations = iterations
+    
+    def __call__(self, img):
+        ksize = tuple((np.array(img.shape) / self.blur_scaling).astype(int))
+        
+        img_temp = cv2.blur(img, ksize)
+        img_temp = cv2.normalize(img_temp, None, 0, 255, cv2.NORM_MINMAX)
+        
+        thresholded = img_temp > 0
+        
+        eroded_mask = binary_erosion(
+            thresholded,
+            structure=np.ones((3,3)),
+            iterations=self.iterations
+        )
+        
+        labeled, num_components = label(eroded_mask)
+        
+        component_sizes = np.bincount(labeled.ravel())
+        
+        max_label = np.argmax(component_sizes)
+        
+        if max_label == 0:
+            component_sizes[max_label] = -1
+            max_label = np.argmax(component_sizes)
+            
+            mask = (labeled == max_label)
+        
+        else:
+            mask = (labeled == max_label)
+            
+        mask = binary_dilation(
+            mask,
+            structure=np.ones((3,3)),
+            iterations=self.iterations
+        )
+        
+        return mask * img
+    
+
+
     

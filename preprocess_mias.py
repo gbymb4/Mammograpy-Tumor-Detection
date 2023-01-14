@@ -6,7 +6,13 @@ Created on Thu Jan  5 15:50:52 2023
 """
 
 from projectio.preprocessing import parse_mias_info, infer_bounding_boxes
-from projectio.preprocessing import BreastMasking, MakeSquare, ResizeImage, CLAHE
+from projectio.preprocessing import (
+    BreastMasking,
+    MakeSquare,
+    ResizeImage,
+    LargestRegionMasking,
+    CLAHE
+)
 from projectio.preprocessing import adapt_transformed_bboxes
 
 from projectio.loading import load_pgm_mammograms
@@ -28,7 +34,12 @@ def main():
     imgs, img_names = load_pgm_mammograms(
         dataset,
         load_order=load_order, 
-        transforms=[BreastMasking(), MakeSquare(recenter_tracker), ResizeImage(dims, rescale_tracker)],
+        transforms=[
+            BreastMasking(),
+            MakeSquare(recenter_tracker),
+            ResizeImage(dims, rescale_tracker),
+            LargestRegionMasking()
+        ],
         stack_transforms=[CLAHE()]
     )
     
