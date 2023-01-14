@@ -24,12 +24,14 @@ def main():
 
     dataset = 'mias'
 
+    rotate_tracker = {}
+    
     recenter_tracker = []
     rescale_tracker = []
-
+    
     mias_info = parse_mias_info()
-
-    load_order = mias_info['REFNUM']
+    
+    load_order = mias_info['REFNUM'].drop_duplicates()
     
     imgs, img_names = load_pgm_mammograms(
         dataset,
@@ -40,7 +42,10 @@ def main():
             ResizeImage(dims, rescale_tracker),
             LargestRegionMasking()
         ],
-        stack_transforms=[CLAHE()]
+        stack_transforms=[
+            CLAHE()
+        ],
+        rotate_tracker=rotate_tracker
     )
     
     img_names = [name[:-4] for name in img_names]
@@ -58,29 +63,22 @@ def main():
     radii = list(mias_info['RADIUS'])
     radii = list(map(float, radii))
     
-    bboxes = infer_bounding_boxes(load_order, centers, radii)
-    bboxes = adapt_transformed_bboxes(bboxes, recenter_tracker, rescale_tracker)
+    bboxes = infer_bounding_boxes(
+        mias_info['REFNUM'],
+        centers, 
+        radii, 
+        rotate_tracker
+    )
+    
+    bboxes = adapt_transformed_bboxes(
+        bboxes,
+        recenter_tracker=recenter_tracker,
+        rescale_tracker=rescale_tracker
+    )
 
     save_preprocessed_images(imgs, img_names, dataset)
     save_bboxes(bboxes, dataset)
     
-    import numpy as np
-    import matplotlib.pyplot as plt
-    from matplotlib.patches import Rectangle
-    
-    for img, bboxes_dict in zip(imgs, bboxes.values()):
-        fig, ax = plt.subplots()
-        
-        ax.imshow(np.swapaxes(img, 0, 2), cmap='gray')
-        
-        x_min, y_min, x_max, y_max = bboxes_dict['bboxes'][0]
-
-        # Create the rectangle patch
-        rect = Rectangle((x_min, y_min), x_max-x_min, y_max-y_min, fill=False, color='red')
-        
-        ax.add_patch(rect)
-        
-        plt.show()
     
     
 if __name__ == '__main__':

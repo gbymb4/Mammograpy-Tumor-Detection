@@ -184,19 +184,27 @@ def compute_bounding_boxes(rois):
         
         
     
-def infer_bounding_boxes(names, centers, radii):
-    bboxes = []
+def infer_bounding_boxes(names, centers, radii, rotate_tracker):
+    ans = {name: {'bboxes': []} for name in names}
     
-    for center, radius in zip(centers, radii):
-        x, y = center
+    for name, center, radius in zip(names, centers, radii):
+        #y, x = center
+        y, x = center
+        
+        rotate_record = rotate_tracker[name]
+        
+        if rotate_record[0] == 'left':
+            y = rotate_record[1][1] - y
+            x = rotate_record[1][0] - x
+        
+        #elif rotate_record[0] == 'right':
+        #    y = rotate_record[1][1] - y
         
         x_min, x_max = x - radius, x + radius
         y_min, y_max = y - radius, y + radius
         
         bbox = [x_min, y_min, x_max, y_max]
         
-        bboxes.append(bbox)
-        
-    ans = {name: {'bboxes': [bbox]} for name, bbox in zip(names, bboxes)}
+        ans[name]['bboxes'].append(bbox)
         
     return ans

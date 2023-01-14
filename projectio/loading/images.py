@@ -63,18 +63,33 @@ def load_dicom_mammograms(dataset, load_limit=None, **kwargs):
 
 
 
-def load_pgm_mammogram(fname, is_mias=False, transforms=None, stack_transforms=None):
+def load_pgm_mammogram(
+        fname,
+        is_mias=False,
+        transforms=None,
+        stack_transforms=None,
+        rotate_tracker=None
+    ):
     img = cv2.imread(fname, -1)
     img = cv2.normalize(img,  None, 0, 255, cv2.NORM_MINMAX)
     
     if is_mias:
         left = fname[-6] == 'l'
         
+        key = os.path.basename(fname)[:-4]
+        
+        img_shape = img.shape
         if left:
             img = cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE)
+            
+            if rotate_tracker is not None:
+                rotate_tracker[key] = ('left', img_shape)
         
         else:
             img = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
+            
+            if rotate_tracker is not None:
+                rotate_tracker[key] = ('right', img_shape)
     
     name = Path(fname).name.split('_')[0]
     

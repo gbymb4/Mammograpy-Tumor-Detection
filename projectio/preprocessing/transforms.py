@@ -123,7 +123,7 @@ class BreastMasking:
         
         _, mask = cv2.threshold(img_temp, self.threshold, 255, cv2.THRESH_BINARY)
         
-        img = img * mask
+        img[mask == 0] = 0
         
         return img
     
@@ -170,7 +170,9 @@ class LargestRegionMasking:
             iterations=self.iterations
         )
         
-        return mask * img
+        img[mask == 0] = 0
+        
+        return img
     
 
 
