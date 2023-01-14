@@ -119,8 +119,8 @@ class GeneralSSD(SSD, ABC):
         detections: List[Dict[str, Tensor]] = []
         
         matched_idxs = []
-        if targets is None:
-            torch._assert(False, "targets should not be none when in training mode")
+        if targets is None:...
+            #torch._assert(False, "targets should not be none when in training mode")
         else:
             for anchors_per_image, targets_per_image in zip(anchors, targets):
                 if targets_per_image["boxes"].numel() == 0:

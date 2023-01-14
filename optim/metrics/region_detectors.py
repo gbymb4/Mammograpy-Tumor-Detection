@@ -5,10 +5,70 @@ Created on Wed Dec 21 16:39:11 2022
 @author: Gavin
 """
 
-import torch
+#import torch
 
 import numpy as np
 
+def compute_tpr(detections, true_boxes, **kwargs):
+    pred_boxes = detections['boxes']
+    true_boxes = true_boxes.cpu().detach().tolist()
+    
+    matches = compare_bounding_boxes(pred_boxes, true_boxes)
+    
+    true_positives = len(matches)
+    
+    total_ground_truth = len(true_boxes)
+    
+    tpr = true_positives / total_ground_truth
+    
+    return tpr
+
+
+
+def compute_fpr(detections, true_boxes, **kwargs):
+    pred_boxes = detections['boxes']
+    true_boxes = true_boxes.cpu().detach().tolist()
+    
+    matches = compare_bounding_boxes(pred_boxes, true_boxes, **kwargs)
+    
+    total_predictions = detections['trialed_boxes']
+    
+    true_positives = len(matches)
+    false_positives = total_predictions - true_positives
+    
+    fpr = false_positives / total_predictions
+    
+    return fpr
+
+
+
+def compare_bounding_boxes(predictions, ground_truth, intersection_threshold=0.6):
+    gt_boxes = np.array(ground_truth)
+    pred_boxes = np.array(predictions)
+    
+    x1, y1, x2, y2 = np.split(gt_boxes, 4, axis=-1)
+    
+    gt_area = (x2-x1)*(y2-y1)
+    
+    x1, y1, x2, y2 = np.split(pred_boxes, 4, axis=-1)
+    
+    x1 = np.maximum(x1, np.transpose(x1))
+    y1 = np.maximum(y1, np.transpose(y1))
+    x2 = np.minimum(x2, np.transpose(x2))
+    y2 = np.minimum(y2, np.transpose(y2))
+    
+    width_i = np.maximum(x2 - x1, 0)
+    height_i = np.maximum(y2 - y1, 0)
+    
+    area_i = width_i * height_i
+    area_i = np.where(area_i > 0, area_i, np.inf)
+    area_i = np.min(area_i, axis=1)
+    
+    matches = np.where(area_i/gt_area >= intersection_threshold)
+    
+    return matches
+
+'''
 def compute_tpr(detections, true_boxes, intersection_threshold=0.6):
     pred_boxes = detections['boxes']
     true_boxes = true_boxes.cpu().detach().tolist()
@@ -125,3 +185,4 @@ def jaccard_iou(box_a, box_b):
               (box_b[:, 3]-box_b[:, 1])).unsqueeze(0).expand_as(inter)  # [A,B]
     union = area_a + area_b - inter
     return inter / union  # [A,B]
+'''
