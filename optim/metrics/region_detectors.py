@@ -13,7 +13,7 @@ def compute_tpr(detections, true_boxes, **kwargs):
     pred_boxes = detections['boxes']
     true_boxes = true_boxes.cpu().detach().tolist()
     
-    matches = compare_bounding_boxes(pred_boxes, true_boxes)
+    matches = compare_bounding_boxes(pred_boxes, true_boxes, **kwargs)
     
     true_positives = len(matches)
     
