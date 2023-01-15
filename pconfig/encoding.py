@@ -26,4 +26,11 @@ INBREAST_LABEL_ENCODING_SCHEME = {
     'distortion': 2
 }
 
+MIAS_LABEL_ENCODING_SCEHEME = {
+    'CIRC': 0,
+    'MISC': 0,
+    'SPIC': 1,
+    'ARCH': 2
+}
+
 NUM_CLASSES = 3

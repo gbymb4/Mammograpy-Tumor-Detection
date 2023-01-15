@@ -43,7 +43,10 @@ class ROIDataset(Dataset):
             load_limit=load_limit
         )
         
-        encoding = c.INBREAST_LABEL_ENCODING_SCHEME
+        if dataset.lower() == 'inbreast':
+            encoding = c.INBREAST_LABEL_ENCODING_SCHEME
+        elif dataset.lower() == 'mias':
+            encoding = c.MIAS_LABEL_ENCODING_SCEHEME
         
         all_boxes, all_labels = [], []
         for bbox_data in bboxes.values():
