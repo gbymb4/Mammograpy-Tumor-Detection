@@ -20,6 +20,8 @@ class GeneratorConvBlock(nn.Module):
             padding
         ):
         
+        super().__init__()
+        
         a = nn.LeakyReLU()
         cn = nn.Conv2d(in_channels, out_channels, kernel, stride, padding)
         bn = nn.BatchNorm2d(out_channels)
@@ -45,6 +47,8 @@ class GeneratorDeconvBlock(nn.Module):
             use_dropout=True
         ):
     
+        super().__init__()
+        
         a = nn.ReLU()
         dn = nn.ConvTranspose2d(in_channels, out_channels, kernel, stride, padding)
         bn = nn.BatchNorm2d(out_channels)
@@ -59,19 +63,21 @@ class GeneratorDeconvBlock(nn.Module):
            
             
            
-        def forward(self, x):
-            return self.features(x)
+    def forward(self, x):
+        return self.features(x)
         
     
 
 class CGANGenerator(nn.Module):
     
     def __init__(self):
+        super().__init__()
+        
         kernel = (4, 4)
         stride = (2, 2)
-        padding = (2, 2)
+        padding = (1, 1)
         
-        self.cn1 = nn.Conv2d(1, 32, kernel, stride)
+        self.cn1 = nn.Conv2d(1, 32, kernel, stride, padding)
         
         self.gcb2 = GeneratorConvBlock(32, 64, kernel, stride, padding)
         self.gcb3 = GeneratorConvBlock(64, 128, kernel, stride, padding)
@@ -81,7 +87,7 @@ class CGANGenerator(nn.Module):
         self.gcb7 = GeneratorConvBlock(256, 256, kernel, stride, padding)
         
         self.ac8 = nn.LeakyReLU()
-        self.cn8 = nn.Conv2d(256, 256, kernel, stride)
+        self.cn8 = nn.Conv2d(256, 256, (2, 2), stride)
         
         self.gdb1 = GeneratorDeconvBlock(256, 256, kernel, stride, padding)
         self.gdb2 = GeneratorDeconvBlock(512, 256, kernel, stride, padding)
@@ -98,6 +104,11 @@ class CGANGenerator(nn.Module):
         
     
     def forward(self, x):
+        if len(x.shape) == 4:
+            dim = 1
+        elif len(x.shape) == 3:
+            dim = 0
+            
         out1 = self.cn1(x)
         
         out2 = self.gcb2(out1)
@@ -109,13 +120,13 @@ class CGANGenerator(nn.Module):
 
         out8 = self.cn8(self.ac8(out7))  
         
-        out9 = torch.cat((self.gdb1(out8), out7))
-        out10 = torch.cat((self.gdb2(out9), out6))
-        out11 = torch.cat((self.gdb3(out10), out5))
-        out12 = torch.cat((self.gdb4(out11), out4))
-        out13 = torch.cat((self.gdb5(out12), out3))
-        out14 = torch.cat((self.gdb6(out13), out2))
-        out15 = torch.cat((self.gdb7(out14), out1))
+        out9 = torch.cat((self.gdb1(out8), out7), dim=dim)
+        out10 = torch.cat((self.gdb2(out9), out6), dim=dim)
+        out11 = torch.cat((self.gdb3(out10), out5), dim=dim)
+        out12 = torch.cat((self.gdb4(out11), out4), dim=dim)
+        out13 = torch.cat((self.gdb5(out12), out3), dim=dim)
+        out14 = torch.cat((self.gdb6(out13), out2), dim=dim)
+        out15 = torch.cat((self.gdb7(out14), out1), dim=dim)
 
         out16 = self.dn8(self.ad8(out15))
         
@@ -123,11 +134,13 @@ class CGANGenerator(nn.Module):
         
         return mask
     
-    
+
 
 class CGANDiscriminator(nn.Module):
     
     def __init__(self):
+        super().__init__()
+        
         kernel = (4, 4)
         stride = (2, 2)
         
@@ -163,3 +176,4 @@ class CGANDiscriminator(nn.Module):
     
     def forward(self, x):
         return self.features(x)
+    
