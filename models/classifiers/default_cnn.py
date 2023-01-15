@@ -5,14 +5,14 @@ Created on Sun Jan 15 19:47:57 2023
 @author: Gavin
 """
 
-import torch
-
 from torch import nn
 
 class CNNClassifier(nn.Module):
     
     # in_channels is a parameter in-case the mask is concatenated to the input tensor
     def __init__(self, in_channels):
+        super().__init__()
+        
         cn1 = nn.Conv2d(in_channels, 64, (9, 9), (1, 1), (2, 2))
         p1 = nn.MaxPool2d((4, 4), (4, 4))
         
