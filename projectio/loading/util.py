@@ -13,7 +13,7 @@ from shapely.geometry import Polygon
 from scipy.ndimage import zoom
 from PIL import Image, ImageDraw
 
-def format_segmentation_rois(rois, fuzzy_bbox_func=None):
+def format_segmentation_rois(rois, fuzzy_bbox_func=None, device='cpu'):
     rois = np.array(list(zip(*rois)))
     
     formatted = np.apply_along_axis(
@@ -23,14 +23,14 @@ def format_segmentation_rois(rois, fuzzy_bbox_func=None):
         fuzzy_bbox_func
     )
     
-    formatted = torch.from_numpy(formatted).float()
+    formatted = torch.from_numpy(formatted).float().to(device)
     
     return formatted
     
 
 
-def format_segmentation_roi(roi, fuzzy_bbox_func, device='cpu'):
-    bbox, coords, img = roi
+def format_segmentation_roi(roi, fuzzy_bbox_func):
+    bbox, coords, _, img = roi
     
     img = img.detach().cpu().numpy()
     
@@ -54,8 +54,8 @@ def format_segmentation_roi(roi, fuzzy_bbox_func, device='cpu'):
     new_shape = (shape[0], 256, 256)
     zoom_factor = np.divide(new_shape, img_roi.shape)
     
-    img_roi = zoom(img_roi, zoom=zoom_factor, order=1)
-    mask_roi = zoom(mask_roi, zoom=zoom_factor, order=1)
+    img_roi = zoom(img_roi, zoom=zoom_factor, order=0)
+    mask_roi = zoom(mask_roi, zoom=zoom_factor, order=0)
     
     return img_roi, mask_roi
 
@@ -65,11 +65,15 @@ class FuzzyBoundingBoxes:
     
     def __init__(
             self,
+            max_x=2048,
+            max_y=2048,
             scale_tolerance=0.3,
-            x_tolerance=10,
-            y_tolerance=10
+            x_tolerance=0.1,
+            y_tolerance=0.1,
         ):
         
+        self.max_x = max_x
+        self.max_y = max_y
         self.scale_tolerance = scale_tolerance
         self.x_tolerance = x_tolerance
         self.y_tolerance = y_tolerance
@@ -79,10 +83,12 @@ class FuzzyBoundingBoxes:
         
         bbox = self.__scale_bbox(bbox, new_scale)
         
-        x_shift = random.uniform(-self.x_tolerance, self.x_tolerance)
-        y_shift = random.uniform(-self.y_tolerance, self.y_tolerance)
+        x_tolerance = random.uniform(-self.x_tolerance, self.x_tolerance)
+        y_tolerance = random.uniform(-self.y_tolerance, self.y_tolerance)
         
-        bbox = self.__translate_bbox(bbox, x_shift, y_shift)
+        bbox = self.__translate_bbox(bbox, x_tolerance, y_tolerance)
+        
+        bbox = self.__shift_within_valid_area(bbox)
         
         return bbox
         
@@ -108,8 +114,14 @@ class FuzzyBoundingBoxes:
     
     
     
-    def __translate_bbox(self, bbox, x_shift, y_shift):
+    def __translate_bbox(self, bbox, x_tolerance, y_tolerance):
         x_min, y_min, x_max, y_max = bbox
+        
+        width = x_max - x_min
+        height = y_max - y_min
+        
+        x_shift = x_tolerance * width
+        y_shift = y_tolerance * height
         
         x_min += x_shift
         x_max += x_shift
@@ -117,4 +129,35 @@ class FuzzyBoundingBoxes:
         y_min += y_shift
         y_max += y_shift
         
+        return x_min, y_min, x_max, y_max
+    
+    
+    
+    def __shift_within_valid_area(self, bbox):
+        x_min, y_min, x_max, y_max = bbox
+        
+        if x_min < 0:
+            x_shift = -x_min
+            
+            x_min += x_shift
+            x_max += x_shift
+            
+        if x_max > self.max_x - 1:
+            x_shift = self.max_x - x_max
+            
+            x_min += x_shift
+            x_max += x_shift
+            
+        if y_min < 0:
+            y_shift = -y_min
+            
+            y_min += y_shift
+            y_max += y_shift
+            
+        if y_max > self.max_y:
+            y_shift = self.max_y - y_max
+            
+            y_min += y_shift
+            y_max += y_shift
+            
         return x_min, y_min, x_max, y_max

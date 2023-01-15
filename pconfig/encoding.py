@@ -4,7 +4,7 @@ Created on Tue Dec  6 19:06:38 2022
 
 @author: Gavin
 """
-
+'''
 INBREAST_LABEL_ENCODING_SCHEME = {
     'calcification': 0,
     'calcifications': 0, # typo in original dataset
@@ -17,3 +17,13 @@ INBREAST_LABEL_ENCODING_SCHEME = {
 }
 
 NUM_CLASSES = 5
+'''
+
+INBREAST_LABEL_ENCODING_SCHEME = {
+    'mass': 0,
+    'spiculated region': 1,
+    'espiculated region': 1, # typo in original dataset
+    'distortion': 2
+}
+
+NUM_CLASSES = 3

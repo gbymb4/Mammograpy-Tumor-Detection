@@ -184,10 +184,6 @@ class SegmentationDataset(Dataset):
             
             all_labels.append(labels)
             
-            #coords = np.array(coords)
-            #coords = torch.from_numpy(coords).float()
-            #coords = coords.to(device)
-            
             all_coords.append(coords)
             
         if filter_empty_imgs:
@@ -213,10 +209,10 @@ class SegmentationDataset(Dataset):
             all_coords = new_coords
         
         rois_cropping = []
-        for i, (boxes, coords) in enumerate(zip(all_boxes, all_coords)):
-            for box, coord in zip(boxes, coords):
-                rois_cropping.append((box, coord, imgs[i]))
-        
+        for i, (boxes, coords, labels) in enumerate(zip(all_boxes, all_coords, all_labels)):
+            for box, coord, label in zip(boxes, coords, labels):
+                rois_cropping.append((box, coord, label, imgs[i]))
+                
         self.rois = np.array(rois_cropping)
         
         
