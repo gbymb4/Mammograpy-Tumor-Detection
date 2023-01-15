@@ -16,11 +16,12 @@ class GeneratorConvBlock(nn.Module):
             in_channels, 
             out_channels, 
             kernel, 
-            stride
+            stride,
+            padding
         ):
         
         a = nn.LeakyReLU()
-        cn = nn.Conv2d(in_channels, out_channels, kernel, stride)
+        cn = nn.Conv2d(in_channels, out_channels, kernel, stride, padding)
         bn = nn.BatchNorm2d(out_channels)
         
         self.features = nn.Sequential(a, cn, bn)
@@ -40,11 +41,12 @@ class GeneratorDeconvBlock(nn.Module):
             out_channels, 
             kernel, 
             stride, 
+            padding,
             use_dropout=True
         ):
     
         a = nn.ReLU()
-        dn = nn.ConvTranspose2d(in_channels, out_channels, kernel, stride)
+        dn = nn.ConvTranspose2d(in_channels, out_channels, kernel, stride, padding)
         bn = nn.BatchNorm2d(out_channels)
         
         if use_dropout:
@@ -67,26 +69,27 @@ class CGANGenerator(nn.Module):
     def __init__(self):
         kernel = (4, 4)
         stride = (2, 2)
+        padding = (2, 2)
         
         self.cn1 = nn.Conv2d(1, 32, kernel, stride)
         
-        self.gcb2 = GeneratorConvBlock(32, 64, kernel, stride)
-        self.gcb3 = GeneratorConvBlock(64, 128, kernel, stride)
-        self.gcb4 = GeneratorConvBlock(128, 256, kernel, stride)
-        self.gcb5 = GeneratorConvBlock(256, 256, kernel, stride)
-        self.gcb6 = GeneratorConvBlock(256, 256, kernel, stride)
-        self.gcb7 = GeneratorConvBlock(256, 256, kernel, stride)
+        self.gcb2 = GeneratorConvBlock(32, 64, kernel, stride, padding)
+        self.gcb3 = GeneratorConvBlock(64, 128, kernel, stride, padding)
+        self.gcb4 = GeneratorConvBlock(128, 256, kernel, stride, padding)
+        self.gcb5 = GeneratorConvBlock(256, 256, kernel, stride, padding)
+        self.gcb6 = GeneratorConvBlock(256, 256, kernel, stride, padding)
+        self.gcb7 = GeneratorConvBlock(256, 256, kernel, stride, padding)
         
         self.ac8 = nn.LeakyReLU()
         self.cn8 = nn.Conv2d(256, 256, kernel, stride)
         
-        self.gdb1 = GeneratorDeconvBlock(256, 256, kernel, stride)
-        self.gdb2 = GeneratorDeconvBlock(512, 256, kernel, stride)
-        self.gdb3 = GeneratorDeconvBlock(512, 256, kernel, stride)
-        self.gdb4 = GeneratorDeconvBlock(512, 256, kernel, stride, False)
-        self.gdb5 = GeneratorDeconvBlock(512, 128, kernel, stride, False)
-        self.gdb6 = GeneratorDeconvBlock(256, 64, kernel, stride, False)
-        self.gdb7 = GeneratorDeconvBlock(128, 32, kernel, stride, False)
+        self.gdb1 = GeneratorDeconvBlock(256, 256, kernel, stride, padding)
+        self.gdb2 = GeneratorDeconvBlock(512, 256, kernel, stride, padding)
+        self.gdb3 = GeneratorDeconvBlock(512, 256, kernel, stride, padding)
+        self.gdb4 = GeneratorDeconvBlock(512, 256, kernel, stride, padding, False)
+        self.gdb5 = GeneratorDeconvBlock(512, 128, kernel, stride, padding, False)
+        self.gdb6 = GeneratorDeconvBlock(256, 64, kernel, stride, padding, False)
+        self.gdb7 = GeneratorDeconvBlock(128, 32, kernel, stride, padding, False)
         
         self.ad8 = nn.ReLU()
         self.dn8 = nn.ConvTranspose2d(64, 1, kernel, stride)
