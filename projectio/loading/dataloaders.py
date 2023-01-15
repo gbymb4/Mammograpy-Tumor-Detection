@@ -13,7 +13,7 @@ import pconfig as c
 from .images import load_preprocessed_images
 from .bboxes import load_bboxes
 
-from torch.utils.data import DataLoader, Dataset, SubsetRandomSampler
+from torch.utils.data import DataLoader, Dataset, SubsetRandomSampler, ConcatDataset
 from sklearn.model_selection import KFold
 
 class ROIDataset(Dataset):
@@ -24,17 +24,24 @@ class ROIDataset(Dataset):
             device='cpu', 
             filter_empty_imgs=True,
             bbox_min_size=7,
+            load_limit=None
         ):
 
         super().__init__()
         
-        imgs, _ = load_preprocessed_images(dataset)
+        imgs, _ = load_preprocessed_images(
+            dataset,
+            load_limit=load_limit
+        )
         
         imgs = imgs.astype(float) / 255.0
         imgs = torch.from_numpy(imgs).float()
         imgs = imgs.to(device)
         
-        bboxes = load_bboxes(dataset)
+        bboxes = load_bboxes(
+            dataset,
+            load_limit=load_limit
+        )
         
         encoding = c.INBREAST_LABEL_ENCODING_SCHEME
         
@@ -112,6 +119,121 @@ class ROIDataset(Dataset):
 
 
 
+class SegmentationDataset(Dataset):
+    
+    def __init__(
+            self,
+            dataset,
+            device='cpu', 
+            filter_empty_imgs=True,
+            bbox_min_size=7,
+            load_limit=None
+        ):
+
+        super().__init__()
+        
+        imgs, img_names = load_preprocessed_images(
+            dataset,
+            path_suffix='_highres',
+            load_limit=load_limit
+        )
+        
+        imgs = imgs.astype(float) / 255.0
+        imgs = torch.from_numpy(imgs).float()
+        imgs = imgs.to(device)
+        
+        bboxes = load_bboxes(
+            dataset,
+            fname_suffix='_highres',
+            load_limit=load_limit
+        )
+        
+        encoding = c.INBREAST_LABEL_ENCODING_SCHEME
+        
+        all_boxes, all_labels, all_coords = [], [], []
+        for bbox_data in bboxes.values():
+            elem_boxes = bbox_data['bboxes']
+            elem_labels = bbox_data['classes']
+            elem_coords = bbox_data['coords']
+            
+            boxes, labels, coords = [], [], []
+            for box, label, coord in zip(elem_boxes, elem_labels, elem_coords):
+                label_str = label.lower()
+                
+                if label_str not in encoding.keys():
+                    continue
+                
+                if bbox_lt_min(box, bbox_min_size):
+                    continue
+                    
+                label = encoding[label_str]
+                
+                boxes.append(box)
+                labels.append(label)
+                coords.append(coord)
+            
+            boxes = np.array(boxes)
+            boxes = torch.from_numpy(boxes).float()
+            boxes = boxes.to(device)
+            
+            all_boxes.append(boxes)
+            
+            labels = np.array(labels)
+            labels = torch.from_numpy(labels).type(torch.int64)
+            labels = labels.to(device)
+            
+            all_labels.append(labels)
+            
+            #coords = np.array(coords)
+            #coords = torch.from_numpy(coords).float()
+            #coords = coords.to(device)
+            
+            all_coords.append(coords)
+            
+        if filter_empty_imgs:
+            mask = []
+            
+            for boxes in all_boxes:
+                if len(boxes) == 0: 
+                    mask.append(False)
+                else:
+                    mask.append(True)
+        
+            imgs = imgs[mask]
+            
+            new_boxes, new_labels, new_coords = [], [], []
+            for boxes, labels, coords, mask_elem in zip(all_boxes, all_labels, all_coords, mask):
+                if mask_elem:
+                    new_boxes.append(boxes)
+                    new_labels.append(labels)
+                    new_coords.append(coords)
+                
+            all_boxes = new_boxes
+            all_labels = new_labels
+            all_coords = new_coords
+        
+        rois_cropping = []
+        for i, (boxes, coords) in enumerate(zip(all_boxes, all_coords)):
+            for box, coord in zip(boxes, coords):
+                rois_cropping.append((box, coord, imgs[i]))
+        
+        self.rois = np.array(rois_cropping)
+        
+        
+
+    def __len__(self):
+        return len(self.rois)
+
+    def __getitem__(self, idx):
+        if torch.is_tensor(idx):
+            idx = idx.tolist()
+        
+        rois = self.rois[idx]
+        
+        return rois
+
+
+
 def load_cross_validation_sets(
         dataset_name,
         seed=0,
@@ -155,7 +277,8 @@ def load_cross_validation_sets(
         
 
 def load_train_test_data(
-        dataset_name,
+        dataset_names,
+        dataset_type,
         seed=0,
         device='cpu',
         batch_size=1,
@@ -166,7 +289,8 @@ def load_train_test_data(
     generator = torch.Generator().manual_seed(seed)
     
     train_dataset, test_dataset = load_train_test_datasets_only(
-        dataset_name,
+        dataset_names,
+        dataset_type,
         seed,
         device,
         batch_size,
@@ -195,7 +319,8 @@ def load_train_test_data(
 
 
 def load_train_test_datasets_only(
-        dataset_name,
+        dataset_names,
+        dataset_type,
         seed=0,
         device='cpu',
         batch_size=1,
@@ -205,7 +330,9 @@ def load_train_test_datasets_only(
     
     generator = torch.Generator().manual_seed(seed)
     
-    dataset = ROIDataset(dataset_name, device=device, **kwargs)
+    datasets = [dataset_type(dataset_name, device=device, **kwargs) for dataset_name in dataset_names]
+    
+    dataset = ConcatDataset(datasets)
     
     num_instances = len(dataset)
     

@@ -10,7 +10,7 @@ import os, json
 import pconfig as c
 import numpy as np
 
-def save_preprocessed_images(imgs, names, dataset):
+def save_preprocessed_images(imgs, names, dataset, path_suffix=None):
     data_dir = None
     
     if dataset.lower() == 'inbreast':
@@ -19,8 +19,11 @@ def save_preprocessed_images(imgs, names, dataset):
     elif dataset.lower() == 'mias':
         data_dir = c.PREPROCESSED_MIAS_DIR
        
-    save_imgs_dir = f'{data_dir}/imgs' 
-       
+    if path_suffix is None:
+        save_imgs_dir = f'{data_dir}/imgs' 
+    else:
+        save_imgs_dir = f'{data_dir}/imgs{path_suffix}' 
+        
     if not os.path.exists(save_imgs_dir):
         os.mkdir(save_imgs_dir)
         
@@ -29,19 +32,25 @@ def save_preprocessed_images(imgs, names, dataset):
 
 
 
-def save_rois(coords, dataset):
+def save_rois(coords, dataset, fname_suffix=None):
     data_dir = None
     
     if dataset.lower() == 'inbreast':
         data_dir = c.PREPROCESSED_INBREAST_DIR
         
+    elif dataset.lower() == 'mias':
+        data_dir = c.PREPROCESSED_MIAS_DIR
+        
     save_rois_dir = f'{data_dir}/rois' 
     
     if not os.path.exists(save_rois_dir):
         os.mkdir(save_rois_dir)
-        
-    fname = f'{save_rois_dir}/rois.json'
     
+    if fname_suffix is None:
+        fname = f'{save_rois_dir}/rois.json'
+    else:
+        fname = f'{save_rois_dir}/rois{fname_suffix}.json'
+        
     with open(fname, 'w') as file:
         json.dump(coords, file)
         
@@ -49,7 +58,7 @@ def save_rois(coords, dataset):
         
 
 
-def save_bboxes(bboxes, dataset):
+def save_bboxes(bboxes, dataset, fname_suffix=None):
     data_dir = None
     
     if dataset.lower() == 'inbreast':
@@ -63,8 +72,11 @@ def save_bboxes(bboxes, dataset):
     if not os.path.exists(save_rois_dir):
         os.mkdir(save_rois_dir)
         
-    fname = f'{save_rois_dir}/bboxes.json'
-    
+    if fname_suffix is None:   
+        fname = f'{save_rois_dir}/bboxes.json'
+    else:
+        fname = f'{save_rois_dir}/bboxes{fname_suffix}.json'
+        
     with open(fname, 'w') as file:
         json.dump(bboxes, file)
         

@@ -9,17 +9,26 @@ import json
 
 import pconfig as c
 
-def load_bboxes(dataset):
+def load_bboxes(dataset, fname_suffix=None, load_limit=None):
     data_dir = None
     
     if dataset.lower() == 'inbreast':
         data_dir = f'{c.PREPROCESSED_INBREAST_DIR}/rois'
     
-    fname = f'{data_dir}/rois.json'
+    if fname_suffix is None:   
+        fname = f'{data_dir}/rois.json'
+    else:
+        fname = f'{data_dir}/rois{fname_suffix}.json'
         
     with open(fname, 'r') as file:
         loaded = json.load(file)
         
         file.close()
+      
+    if load_limit is not None:
+        keys = loaded.keys()
+        keys = list(keys)[:load_limit]
+        
+        loaded = {key: loaded[key] for key in keys}
         
     return loaded

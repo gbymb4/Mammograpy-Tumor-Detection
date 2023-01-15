@@ -142,11 +142,14 @@ def load_pgm_mammograms(dataset, load_limit=None, load_order=None, **kwargs):
 
 
 
-def load_preprocessed_images(dataset, load_limit=None):
+def load_preprocessed_images(dataset, path_suffix=None, load_limit=None):
     data_dir = None
     
     if dataset.lower() == 'inbreast':
         data_dir = f'{c.PREPROCESSED_INBREAST_DIR}/imgs'
+        
+    if path_suffix is not None:
+        data_dir = f'{data_dir}{path_suffix}'
     
     img_fnames = os.listdir(data_dir)
     img_fnames = list(filter(lambda x: '.npy' in x, img_fnames))
