@@ -87,9 +87,7 @@ class CGANOptimiser:
                 fake_masks = self.gen(imgs)
                 disc_preds = self.disc(imgs, fake_masks)
                 
-                gen_labels = torch.zeros(disc_preds.shape)
-                
-                adversarial_loss = torch.mean(-torch.log(1 - fake_masks))
+                adversarial_loss = torch.mean(-torch.log(1 - disc_preds))
                 
                 content_loss = content_criterion(
                     fake_masks,
@@ -146,7 +144,7 @@ class CGANOptimiser:
                 fake_masks = self.gen(imgs)
                 disc_preds = self.disc(imgs, fake_masks)
                 
-                adversarial_loss = torch.mean(-torch.log(1 - fake_masks))
+                adversarial_loss = torch.mean(-torch.log(1 - disc_preds))
                 
                 content_loss = content_criterion(
                     fake_masks,
@@ -174,15 +172,15 @@ class CGANOptimiser:
             test_dices.append(sum(test_dice) / len(test_dice))
             test_ious.append(sum(test_iou) / len(test_iou))
             
-            results = {
-                'train_gen_losses': train_gen_losses,
-                'train_disc_losses': train_disc_losses,
-                'train_dices': train_dice,
-                'train_ious': train_ious,
-                'test_gen_losses': test_gen_losses,
-                'test_disc_losses': test_disc_losses,
-                'test_dices': test_dices,
-                'test_ious': test_ious,
-            }
+        results = {
+            'train_gen_losses': train_gen_losses,
+            'train_disc_losses': train_disc_losses,
+            'train_dices': train_dice,
+            'train_ious': train_ious,
+            'test_gen_losses': test_gen_losses,
+            'test_disc_losses': test_disc_losses,
+            'test_dices': test_dices,
+            'test_ious': test_ious,
+        }
             
-            return results
+        return results
