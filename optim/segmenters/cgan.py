@@ -118,12 +118,6 @@ class CGANOptimiser:
                 
                 train_dice.append(content_loss.item() / len(batch))
                 train_iou.extend(list(mask_ious))
-                
-            if verbose:
-                print(f'evaluated {len(train_gen_losses)} train batches')
-                print(f'->avg generator loss: {train_gen_losses[-1]}')
-                print(f'->avg discriminator loss: {train_disc_losses[-1]}')
-                print('-'*32)
             
             self.gen.eval()
             self.disc.eval()
@@ -133,6 +127,12 @@ class CGANOptimiser:
             
             train_dices.append(sum(train_dice) / len(train_dice))
             train_ious.append(sum(train_iou) / len(train_iou))
+            
+            if verbose:
+                print(f'evaluated {len(train_gen_losses)} train batches')
+                print(f'->avg generator loss: {train_gen_losses[-1]}')
+                print(f'->avg discriminator loss: {train_disc_losses[-1]}')
+                print('-'*32)
             
             for batch in self.test_loader:
                 data = format_segmentation_rois(batch, fuzzy_bboxes_func)
@@ -148,10 +148,7 @@ class CGANOptimiser:
                 
                 gen_labels = torch.zeros((batch.shape[0],))
                 
-                adversarial_loss = adversarial_criterion(
-                    disc_preds,
-                    gen_labels
-                )
+                adversarial_loss = torch.mean(-torch.log(1 - fake_masks))
                 
                 content_loss = content_criterion(
                     fake_masks,
