@@ -160,10 +160,7 @@ class CGANOptimiser:
                 real_output = self.disc(imgs, masks)
                 fake_output = self.disc(imgs, fake_masks.detach())
                 
-                real_disc_loss = torch.mean(-torch.log(real_output))
-                fake_disc_loss = torch.mean(-torch.log(1 - fake_output))
-                
-                disc_loss = real_disc_loss + fake_disc_loss
+                disc_loss = discriminator_criterion(real_output, fake_output)
                 
                 mask_ious = batch_mask_ious(masks, fake_masks)
                 
