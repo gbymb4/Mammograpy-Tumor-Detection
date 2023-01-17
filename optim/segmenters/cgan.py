@@ -43,11 +43,11 @@ class CGANOptimiser:
         content_criterion = BinaryDiceLoss()
         
         if len(kwargs) == 0:
-            gen_optim = Adam(self.model.parameters(), betas=(0.5, 0.999), lr=2e-4)
-            disc_optim = Adam(self.model.parameters(), betas=(0.5, 0.999), lr=2e-4)
+            gen_optim = Adam(self.gen.parameters(), betas=(0.5, 0.999), lr=2e-4)
+            disc_optim = Adam(self.disc.parameters(), betas=(0.5, 0.999), lr=2e-4)
         else:
-            gen_optim = Adam(self.model.parameters(), **kwargs)
-            disc_optim = Adam(self.model.parameters(), **kwargs)
+            gen_optim = Adam(self.gen.parameters(), **kwargs)
+            disc_optim = Adam(self.disc.parameters(), **kwargs)
             
         train_gen_losses, test_gen_losses = [], []
         train_disc_losses, test_disc_losses = [], []
