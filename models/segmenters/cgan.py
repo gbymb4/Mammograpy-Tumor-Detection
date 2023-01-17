@@ -145,7 +145,7 @@ class CGANDiscriminator(nn.Module):
         kernel = (4, 4)
         stride = (2, 2)
         
-        cn1 = nn.Conv2d(1, 32, kernel, stride)
+        cn1 = nn.Conv2d(2, 32, kernel, stride)
         
         a2 = nn.LeakyReLU()
         cn2 = nn.Conv2d(32, 64, kernel, stride)
@@ -176,5 +176,10 @@ class CGANDiscriminator(nn.Module):
         
     
     def forward(self, x, y):
-        return self.features(torch.cat((x, y)))
+        if len(x.shape) == 4:
+            dim = 1
+        elif len(x.shape) == 3:
+            dim = 0
+        
+        return self.features(torch.cat((x, y), dim=dim))
     
