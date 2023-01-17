@@ -87,7 +87,7 @@ class CGANOptimiser:
                 fake_masks = self.gen(imgs)
                 disc_preds = self.disc(imgs, fake_masks)
                 
-                gen_labels = torch.zeros((batch.shape[0],))
+                gen_labels = torch.zeros((len(batch),))
                 
                 adversarial_loss = adversarial_criterion(
                     disc_preds,
