@@ -101,6 +101,7 @@ class CGANGenerator(nn.Module):
         self.dn8 = nn.ConvTranspose2d(64, 1, kernel, stride)
         
         self.tan = nn.Tanh()
+       
         
     
     def forward(self, x):
@@ -174,6 +175,6 @@ class CGANDiscriminator(nn.Module):
         
         
     
-    def forward(self, x):
-        return self.features(x)
+    def forward(self, x, y):
+        return self.features(torch.cat((x, y)))
     
