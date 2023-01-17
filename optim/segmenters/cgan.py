@@ -8,10 +8,10 @@ Created on Tue Jan 17 13:30:26 2023
 import torch
 
 from torch.optim import Adam
-from torch.nn import BCELoss
 
 from projectio.loading import format_segmentation_rois, FuzzyBoundingBoxes
-from optim.criterions import BinaryDiceLoss
+
+from optim.criterions import BinaryDiceLoss, DiscriminatorBCE
 from optim.metrics import batch_mask_ious
 
 class CGANOptimiser:
@@ -39,7 +39,7 @@ class CGANOptimiser:
             **kwargs
         ):
         
-        adversarial_criterion = BCELoss()
+        discriminator_criterion = DiscriminatorBCE()
         content_criterion = BinaryDiceLoss()
         
         if len(kwargs) == 0:
@@ -87,12 +87,9 @@ class CGANOptimiser:
                 fake_masks = self.gen(imgs)
                 disc_preds = self.disc(imgs, fake_masks)
                 
-                gen_labels = torch.zeros((len(batch),))
+                gen_labels = torch.zeros(disc_preds.shape)
                 
-                adversarial_loss = adversarial_criterion(
-                    disc_preds,
-                    gen_labels
-                )
+                adversarial_loss = torch.mean(-torch.log(1 - fake_masks))
                 
                 content_loss = content_criterion(
                     fake_masks,
@@ -109,10 +106,7 @@ class CGANOptimiser:
                 real_output = self.disc(imgs, masks)
                 fake_output = self.disc(imgs, fake_masks.detach())
                 
-                real_disc_loss = torch.mean(-torch.log(real_output))
-                fake_disc_loss = torch.mean(-torch.log(1 - fake_output))
-                
-                disc_loss = real_disc_loss + fake_disc_loss
+                disc_loss = discriminator_criterion(real_output, fake_output)
                 
                 disc_loss.backward()
                 disc_optim.step()

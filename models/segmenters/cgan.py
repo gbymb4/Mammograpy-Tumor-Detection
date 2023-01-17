@@ -144,23 +144,24 @@ class CGANDiscriminator(nn.Module):
         
         kernel = (4, 4)
         stride = (2, 2)
+        padding = (1, 1)
         
-        cn1 = nn.Conv2d(2, 32, kernel, stride)
+        cn1 = nn.Conv2d(2, 32, kernel, stride, padding)
         
         a2 = nn.LeakyReLU(negative_slope=0.2)
-        cn2 = nn.Conv2d(32, 64, kernel, stride)
+        cn2 = nn.Conv2d(32, 64, kernel, stride, padding)
         bn2 = nn.BatchNorm2d(64)
         
         a3 = nn.LeakyReLU(negative_slope=0.2)
-        cn3 = nn.Conv2d(64, 128, kernel, stride)
+        cn3 = nn.Conv2d(64, 128, kernel, stride, padding)
         bn3 = nn.BatchNorm2d(128)
         
         a4 = nn.LeakyReLU(negative_slope=0.2)
-        cn4 = nn.Conv2d(128, 256, kernel, stride)
+        cn4 = nn.Conv2d(128, 256, kernel, (1, 1), padding)
         bn4 = nn.BatchNorm2d(256)
         
         a5 = nn.LeakyReLU(negative_slope=0.2)
-        cn5 = nn.Conv2d(256, 1, kernel, stride)
+        cn5 = nn.Conv2d(256, 1, kernel, (1, 1), padding)
         
         sig = nn.Sigmoid()
         
