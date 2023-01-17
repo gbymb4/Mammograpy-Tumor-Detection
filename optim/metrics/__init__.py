@@ -1,3 +1,3 @@
 from .region_detectors import *
-from .ssegmenters import *
+from .segmenters import *
 from .util import *
