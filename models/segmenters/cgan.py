@@ -22,7 +22,7 @@ class GeneratorConvBlock(nn.Module):
         
         super().__init__()
         
-        a = nn.LeakyReLU()
+        a = nn.LeakyReLU(negative_slope=0.2)
         cn = nn.Conv2d(in_channels, out_channels, kernel, stride, padding)
         bn = nn.BatchNorm2d(out_channels)
         
@@ -86,7 +86,7 @@ class CGANGenerator(nn.Module):
         self.gcb6 = GeneratorConvBlock(256, 256, kernel, stride, padding)
         self.gcb7 = GeneratorConvBlock(256, 256, kernel, stride, padding)
         
-        self.ac8 = nn.LeakyReLU()
+        self.ac8 = nn.LeakyReLU(negative_slope=0.2)
         self.cn8 = nn.Conv2d(256, 256, (2, 2), stride)
         
         self.gdb1 = GeneratorDeconvBlock(256, 256, kernel, stride, padding)
@@ -98,7 +98,7 @@ class CGANGenerator(nn.Module):
         self.gdb7 = GeneratorDeconvBlock(128, 32, kernel, stride, padding, False)
         
         self.ad8 = nn.ReLU()
-        self.dn8 = nn.ConvTranspose2d(64, 1, kernel, stride)
+        self.dn8 = nn.ConvTranspose2d(64, 1, kernel, stride, padding)
         
         self.tan = nn.Tanh()
        
@@ -147,19 +147,19 @@ class CGANDiscriminator(nn.Module):
         
         cn1 = nn.Conv2d(2, 32, kernel, stride)
         
-        a2 = nn.LeakyReLU()
+        a2 = nn.LeakyReLU(negative_slope=0.2)
         cn2 = nn.Conv2d(32, 64, kernel, stride)
         bn2 = nn.BatchNorm2d(64)
         
-        a3 = nn.LeakyReLU()
+        a3 = nn.LeakyReLU(negative_slope=0.2)
         cn3 = nn.Conv2d(64, 128, kernel, stride)
         bn3 = nn.BatchNorm2d(128)
         
-        a4 = nn.LeakyReLU()
+        a4 = nn.LeakyReLU(negative_slope=0.2)
         cn4 = nn.Conv2d(128, 256, kernel, stride)
         bn4 = nn.BatchNorm2d(256)
         
-        a5 = nn.LeakyReLU()
+        a5 = nn.LeakyReLU(negative_slope=0.2)
         cn5 = nn.Conv2d(256, 1, kernel, stride)
         
         sig = nn.Sigmoid()
