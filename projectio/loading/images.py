@@ -147,6 +147,8 @@ def load_preprocessed_images(dataset, path_suffix=None, load_limit=None):
     
     if dataset.lower() == 'inbreast':
         data_dir = f'{c.PREPROCESSED_INBREAST_DIR}/imgs'
+    elif dataset.lower() == 'mias':
+        data_dir = f'{c.PREPROCESSED_MIAS_DIR}/imgs'
         
     if path_suffix is not None:
         data_dir = f'{data_dir}{path_suffix}'
@@ -154,7 +156,11 @@ def load_preprocessed_images(dataset, path_suffix=None, load_limit=None):
     img_fnames = os.listdir(data_dir)
     img_fnames = list(filter(lambda x: '.npy' in x, img_fnames))
     img_fnames = list(map(lambda x: f'{data_dir}/' + x, img_fnames))
-    img_fnames = sorted(img_fnames, key=lambda x: int(Path(x).name.split('_')[0][:-4]))
+    
+    if dataset.lower() == 'inbreast':
+        img_fnames = sorted(img_fnames, key=lambda x: int(Path(x).name.split('_')[0][:-4]))
+    elif dataset.lower() == 'mias':
+        img_fnames = sorted(img_fnames, key=lambda x: Path(x).name.split('_')[0][:-4])
     
     if load_limit is not None:
         img_fnames = img_fnames[:load_limit]

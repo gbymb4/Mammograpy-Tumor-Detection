@@ -37,7 +37,7 @@ class ROIDataset(Dataset):
         imgs = imgs.astype(float) / 255.0
         imgs = torch.from_numpy(imgs).float()
         imgs = imgs.to(device)
-        
+        print(imgs.shape)
         bboxes = load_bboxes(
             dataset,
             load_limit=load_limit
@@ -79,16 +79,16 @@ class ROIDataset(Dataset):
             labels = labels.to(device)
             
             all_labels.append(labels)
-            
+         
         if filter_empty_imgs:
             mask = []
-            
+            print(dataset)
             for boxes in all_boxes:
                 if len(boxes) == 0: 
                     mask.append(False)
                 else:
                     mask.append(True)
-        
+            print(len(imgs))
             imgs = imgs[mask]
             
             new_boxes, new_labels = [], []
