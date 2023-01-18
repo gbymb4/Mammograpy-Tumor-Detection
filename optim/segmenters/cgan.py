@@ -126,12 +126,6 @@ class CGANOptimiser:
             train_dices.append(sum(train_dice) / len(train_dice))
             train_ious.append(sum(train_iou) / len(train_iou))
             
-            if verbose:
-                print(f'evaluated {len(train_gen_losses)} train batches')
-                print(f'->avg generator loss: {train_gen_losses[-1]}')
-                print(f'->avg discriminator loss: {train_disc_losses[-1]}')
-                print('-'*32)
-            
             for batch in self.test_loader:
                 data = format_segmentation_rois(batch, fuzzy_bboxes_func)
                 
@@ -172,6 +166,12 @@ class CGANOptimiser:
             test_dices.append(sum(test_dice) / len(test_dice))
             test_ious.append(sum(test_iou) / len(test_iou))
             
+            if verbose:
+                print(f'--evaluated {len(train_gen_loss)} train batches')
+                print(f'->avg generator loss: train = {train_gen_losses[-1]:.4f}, test = {test_gen_losses[-1]:.4f}')
+                print(f'->avg discriminator loss: train = {train_disc_losses[-1]:.4f}, test = {test_disc_losses[-1]:.4f}')
+                print('-'*32)
+                
         results = {
             'train_gen_losses': train_gen_losses,
             'train_disc_losses': train_disc_losses,

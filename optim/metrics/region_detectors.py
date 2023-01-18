@@ -44,7 +44,7 @@ def compute_fpr(detections, true_boxes, **kwargs):
 
 def compare_bounding_boxes(predictions, ground_truth, intersection_threshold=0.6):
     gt_boxes = np.array(ground_truth)
-    pred_boxes = np.array(predictions)
+    pred_boxes = predictions.detach().cpu().numpy()
     
     x1, y1, x2, y2 = np.split(gt_boxes, 4, axis=-1)
     

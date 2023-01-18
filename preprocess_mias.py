@@ -15,7 +15,7 @@ from projectio.preprocessing import (
 )
 from projectio.preprocessing import adapt_transformed_bboxes
 
-from projectio.loading import load_pgm_mammograms
+from projectio.loading import load_pgm_mammograms, assign_bbox_labels
 
 from projectio.saving import save_rois, save_preprocessed_images
 
@@ -76,6 +76,12 @@ def __roi_dataset():
         rotate_tracker
     )
     
+    bboxes = assign_bbox_labels(
+        bboxes, 
+        mias_info['REFNUM'], 
+        mias_info['CLASS']
+    )
+    
     bboxes = adapt_transformed_bboxes(
         bboxes,
         recenter_tracker=recenter_tracker,
@@ -134,6 +140,12 @@ def __segmentation_classification_dataset():
         centers, 
         radii, 
         rotate_tracker
+    )
+    
+    bboxes = assign_bbox_labels(
+        bboxes, 
+        mias_info['REFNUM'], 
+        mias_info['CLASS']
     )
     
     bboxes = adapt_transformed_bboxes(

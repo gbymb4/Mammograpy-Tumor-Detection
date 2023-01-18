@@ -14,6 +14,9 @@ def load_bboxes(dataset, fname_suffix=None, load_limit=None):
     
     if dataset.lower() == 'inbreast':
         data_dir = f'{c.PREPROCESSED_INBREAST_DIR}/rois'
+        
+    elif dataset.lower() == 'mias':
+        data_dir = f'{c.PREPROCESSED_MIAS_DIR}/rois'
     
     if fname_suffix is None:   
         fname = f'{data_dir}/rois.json'
@@ -32,3 +35,16 @@ def load_bboxes(dataset, fname_suffix=None, load_limit=None):
         loaded = {key: loaded[key] for key in keys}
         
     return loaded
+
+
+
+def assign_bbox_labels(bboxes_dict, img_names, labels):
+    for dict_entry in bboxes_dict.values():
+        dict_entry['classes'] = []
+    
+    for img_name, label in zip(img_names, labels):
+        dict_entry = bboxes_dict[img_name]
+        dict_entry['classes'].append(label)
+        
+    return bboxes_dict
+        
