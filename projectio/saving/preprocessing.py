@@ -18,6 +18,9 @@ def save_preprocessed_images(imgs, names, dataset, path_suffix=None):
         
     elif dataset.lower() == 'mias':
         data_dir = c.PREPROCESSED_MIAS_DIR
+        
+    elif dataset.lower() == 'ddsm':
+        data_dir = c.PREPROCESSED_DDSM_DIR
        
     if path_suffix is None:
         save_imgs_dir = f'{data_dir}/imgs' 
@@ -40,6 +43,9 @@ def save_rois(coords, dataset, fname_suffix=None):
         
     elif dataset.lower() == 'mias':
         data_dir = c.PREPROCESSED_MIAS_DIR
+        
+    elif dataset.lower() == 'ddsm':
+        data_dir = c.PREPROCESSED_DDSM_DIR
         
     save_rois_dir = f'{data_dir}/rois' 
     
@@ -66,6 +72,9 @@ def save_bboxes(bboxes, dataset, fname_suffix=None):
         
     elif dataset.lower() == 'mias':
         data_dir = c.PREPROCESSED_MIAS_DIR
+        
+    elif dataset.lower() == 'ddsm':
+        data_dir = c.PREPROCESSED_DDSM_DIR
         
     save_rois_dir = f'{data_dir}/bboxes' 
     
