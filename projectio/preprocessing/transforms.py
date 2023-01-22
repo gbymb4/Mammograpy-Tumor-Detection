@@ -17,10 +17,39 @@ from scipy.ndimage import binary_erosion, binary_dilation
 
 class MakeSquare:
     
-    def __init__(self, transform_tracker=None):
+    def __init__(self, transform_tracker=None, _padding_override=None):
         self.transform_tracker = transform_tracker
+        
+        self._padding_override = _padding_override
+        
+        if _padding_override is not None:
+            self.calls_count = 0
     
     def __call__(self, img):
+        if self._padding_override is None:
+            img = self.__normal_execute(img)
+            
+        if self._padding_override is not None:
+            img = self.__override_execute(img)
+            
+            self.calls_count += 1
+                
+        return img
+        
+    
+    
+    def __is_left(self, img):
+        com = center_of_mass(img > 0)
+        
+        _, w = img.shape
+        
+        horiz_center = w // 2
+        
+        return com[1] < horiz_center
+    
+    
+    
+    def __normal_execute(self, img):
         h, w = img.shape
         
         if w != h:
@@ -60,20 +89,59 @@ class MakeSquare:
         else:
             if self.transform_tracker is not None:
                 self.transform_tracker.append(('none', 0))
-                 
-        return img
                 
-    def __is_left(self, img):
-        com = center_of_mass(img > 0)
+        return img
         
-        _, w = img.shape
+    
+    
+    def __override_execute(self, img):
+        h, w = img.shape
         
-        horiz_center = w // 2
+        padding_direction = self._padding_override[self.calls_count]
         
-        return com[1] < horiz_center
+        if w != h:
+            if padding_direction == 'vert_left':
+                temp = np.zeros((h, h)).astype(img.dtype) 
+                
+                temp[:, :w] = img
+                img = temp
+                    
+                if self.transform_tracker is not None:
+                    self.transform_tracker.append(('vert_left', 0))
+        
+            elif padding_direction == 'vert_right':
+                delta = h - w 
+                
+                temp = np.zeros((h, h)).astype(img.dtype) 
+                    
+                temp[:, delta:] = img
+                img = temp
+                    
+                if self.transform_tracker is not None:
+                    self.transform_tracker.append(('vert_right', delta))
+                
+            elif padding_direction == 'horiz_left':
+                img = img[:, :h]
+                
+                if self.transform_tracker is not None:
+                    self.transform_tracker.append(('horiz_left', 0))
+                
+            elif padding_direction == 'horiz_right':
+                delta = w - h
+                
+                img = img[:, delta:]
+                
+                if self.transform_tracker is not None:
+                    self.transform_tracker.append(('horiz_right', delta))
+        
+        else:
+            if self.transform_tracker is not None:
+                self.transform_tracker.append(('none', 0))
+                
+        return img
+    
     
             
-
 class ResizeImage:
     
     def __init__(self, dims, transform_tracker=None):

@@ -112,3 +112,82 @@ def parse_mias_info(load_limit=None, cull_no_rad=True):
         parsed = parsed.dropna()
     
     return parsed
+
+
+
+def parse_ddsm_info(load_limit=None):
+    calc_fnames = [
+        'calc_case_description_train_set.csv',
+        'calc_case_description_test_set.csv'
+    ]
+    calc_fnames = [f'{c.DDSM_DIR}/csv/{fname}' for fname in calc_fnames]
+    
+    calc_df = pd.concat([pd.read_csv(fname) for fname in calc_fnames])
+    calc_df['lession'] = ['calcification'] * len(calc_df)
+    
+    mass_fnames = [
+        'mass_case_description_train_set.csv',
+        'mass_case_description_test_set.csv'
+    ]
+    mass_fnames = [f'{c.DDSM_DIR}/csv/{fname}' for fname in mass_fnames]
+    
+    mass_df = pd.concat([pd.read_csv(fname) for fname in mass_fnames])
+    mass_df['lession'] = ['mass'] * len(mass_df)
+    
+    ddsm_df = pd.concat([calc_df, mass_df])
+    ddsm_df = ddsm_df.sort_values(by='patient_id')
+    
+    ddsm_df = ddsm_df.rename(columns={
+        'patient_id': 'PatientID',
+        'left or right breast': 'Laterality',
+        'image view': 'PatientOrientation'
+    })
+    
+    ddsm_df['MammogramPathSuffix'] = [str(Path(path).parent).split('.')[-1] for path in ddsm_df['image file path']]
+    ddsm_df['MaskPathSuffix'] = [str(Path(path).parent).split('.')[-1] for path in ddsm_df['ROI mask file path']]
+        
+    ddsm_df['Laterality'] = ddsm_df['Laterality'].map({'LEFT': 'L', 'RIGHT': 'R'})
+
+    imgs_df = pd.read_csv(f'{c.DDSM_DIR}/csv/dicom_info.csv')
+    
+    imgs_df = imgs_df[~imgs_df['PatientID'].str.contains("^P", regex=True, na=False)]
+    imgs_df['PatientID'] = imgs_df['PatientID'].str.split('_').str[1:3].str.join('_')
+    
+    imgs_df = imgs_df[imgs_df['SeriesDescription']\
+                      .isin(['full mammogram images', 'ROI mask images'])]
+    
+    grouped = imgs_df.groupby(by=['PatientID', 'PatientOrientation', 'Laterality'])
+    
+    imgs_df = grouped.filter(
+        lambda x: x['SeriesDescription'].nunique() == 2 
+    )
+    
+    imgs_df['PathSuffix'] = [str(Path(path).parent).split('.')[-1] for path in imgs_df['image_path']]
+    
+    imgs_df = imgs_df.sort_values(by='PatientID')
+    
+    masks_df = imgs_df.query('SeriesDescription == "ROI mask images"').rename(columns={'PathSuffix': 'MaskPathSuffix'})
+    
+    masks_df = pd.merge(masks_df, ddsm_df, on='MaskPathSuffix')
+    masks_df = masks_df[['PatientID_x', 'PatientOrientation_x', 'Laterality_x', 'SeriesDescription', 'image_path', 'pathology', 'abnormality type']]
+    masks_df['image_path'] = ['data/raw/' + fname[5:] for fname in masks_df['image_path']]
+    masks_df = masks_df.rename(columns={
+        'PatientID_x': 'PatientID',
+        'PatientOrientation_x': 'PatientOrientation',
+        'Laterality_x': 'Laterality'
+    })
+    
+    masks_df['mammogram_names'] = [f'{x}_{y}_{z}' for x, y, z in masks_df[['PatientID', 'PatientOrientation', 'Laterality']].values]
+    
+    masks_df.index = list(range(len(masks_df)))
+    
+    mammograms_df = imgs_df.query('SeriesDescription == "full mammogram images"').rename(columns={'PathSuffix': 'MammogramPathSuffix'})
+    mammograms_df = mammograms_df[['PatientID', 'PatientOrientation', 'Laterality', 'SeriesDescription', 'image_path']]
+    mammograms_df['image_path'] = ['data/raw/' + fname[5:] for fname in mammograms_df['image_path']]
+    
+    mammograms_df['mammogram_names'] = [f'{x}_{y}_{z}' for x, y, z in mammograms_df[['PatientID', 'PatientOrientation', 'Laterality']].values]
+    
+    mammograms_df.index = list(range(len(mammograms_df)))
+    
+    return mammograms_df, masks_df
+    

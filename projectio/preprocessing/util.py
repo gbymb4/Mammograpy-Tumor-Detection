@@ -7,6 +7,8 @@ Created on Thu Dec  1 21:40:49 2022
 
 import numpy as np
 
+from skimage.measure import label, regionprops
+
 def adapt_transformed_coords(
         rois,
         recenter_tracker=None,
@@ -188,7 +190,6 @@ def infer_bounding_boxes(names, centers, radii, rotate_tracker):
     ans = {name: {'bboxes': []} for name in names}
     
     for name, center, radius in zip(names, centers, radii):
-        #y, x = center
         y, x = center
         
         rotate_record = rotate_tracker[name]
@@ -196,10 +197,7 @@ def infer_bounding_boxes(names, centers, radii, rotate_tracker):
         if rotate_record[0] == 'left':
             y = rotate_record[1][1] - y
             x = rotate_record[1][0] - x
-        
-        #elif rotate_record[0] == 'right':
-        #    y = rotate_record[1][1] - y
-        
+
         x_min, x_max = x - radius, x + radius
         y_min, y_max = y - radius, y + radius
         
@@ -208,3 +206,14 @@ def infer_bounding_boxes(names, centers, radii, rotate_tracker):
         ans[name]['bboxes'].append(bbox)
         
     return ans
+
+
+
+def compute_coords_of_mask(mask):
+    labeled_mask = label(mask)
+    regions = regionprops(labeled_mask)
+    
+    largest_region = max(regions, key=lambda x: x.area)
+    
+    coords = np.column_stack([largest_region.coords[:,1], largest_region.coords[:,0]])
+    return coords

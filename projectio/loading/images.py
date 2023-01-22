@@ -141,6 +141,76 @@ def load_pgm_mammograms(dataset, load_limit=None, load_order=None, **kwargs):
     return imgs, names
 
 
+def load_jpg_mammogram(
+        fname,
+        transforms=None,
+        stack_transforms=None
+    ):
+    img = cv2.imread(fname, -1)
+    img = cv2.normalize(img,  None, 0, 255, cv2.NORM_MINMAX)
+    
+    name = str(Path(fname).parent).split('.')[-1] + '_' + str(Path(fname).name)
+    
+    if transforms is not None:
+        for transform in transforms:
+            img = transform(img)
+    
+    if stack_transforms is not None:
+        channels = [img]
+        
+        for transform in stack_transforms:
+            transformed = transform(img)
+            transformed = cv2.normalize(transformed,  None, 0, 255, cv2.NORM_MINMAX)
+            
+            channels.append(transformed)
+
+        img = np.array(channels)
+        img = np.swapaxes(img, 1, 2)
+    
+    return img, name
+
+
+
+def load_jpg_mammograms(dataset, load_limit=None, load_order=None, **kwargs):
+    data_dir = None
+    
+    if dataset.lower() == 'ddsm':
+        data_dir = f'{c.DDSM_DIR}'
+    
+    if load_order is not None:
+        img_fnames = load_order
+        
+        if load_limit is not None:
+            img_fnames = img_fnames[:load_limit]
+    
+    loaded = [load_jpg_mammogram(fname, **kwargs) for fname in img_fnames]
+    
+    imgs = np.array(loaded)
+    names = np.array([Path(fname).name.split('.')[0] for fname in img_fnames])
+    
+    return imgs, names
+
+
+
+def load_jpg_masks(dataset, load_limit=None, load_order=None, **kwargs):
+    data_dir = None
+    
+    if dataset.lower() == 'ddsm':
+        data_dir = f'{c.DDSM_DIR}'
+    
+    if load_order is not None:
+        img_fnames = load_order
+        
+        if load_limit is not None:
+            img_fnames = img_fnames[:load_limit]
+    
+    loaded = [load_jpg_mammogram(fname, **kwargs) for fname in img_fnames]
+    
+    imgs = np.array(loaded)
+    
+    return imgs
+
+
 
 def load_preprocessed_images(dataset, path_suffix=None, load_limit=None):
     data_dir = None
