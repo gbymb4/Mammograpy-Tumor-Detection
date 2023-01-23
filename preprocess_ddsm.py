@@ -208,7 +208,7 @@ def __segmentation_classification_dataset():
     
     mammograms_to_masks = compute_bounding_boxes(mammograms_to_masks)
     
-    save_rois(mammograms_to_masks, dataset, path_suffix='_highres')
+    save_rois(mammograms_to_masks, dataset, fname_suffix='_highres')
     save_preprocessed_images(imgs, img_names, dataset, path_suffix='_highres')
     
     

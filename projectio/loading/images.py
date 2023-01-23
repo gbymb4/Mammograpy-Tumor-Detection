@@ -219,6 +219,8 @@ def load_preprocessed_images(dataset, path_suffix=None, load_limit=None):
         data_dir = f'{c.PREPROCESSED_INBREAST_DIR}/imgs'
     elif dataset.lower() == 'mias':
         data_dir = f'{c.PREPROCESSED_MIAS_DIR}/imgs'
+    elif dataset.lower() == 'ddsm':
+        data_dir = f'{c.PREPROCESSED_DDSM_DIR}/imgs'
         
     if path_suffix is not None:
         data_dir = f'{data_dir}{path_suffix}'
