@@ -178,7 +178,7 @@ def compute_bounding_boxes(rois):
                 y1, y2 = h_min, h_max
                 
             # x and y are backwards - the easiest fix is just flipping them
-            bboxes.append([y1, x1, y2, x2])
+            bboxes.append(list(map(float, [y1, x1, y2, x2])))
             
         roi_data['bboxes'] = bboxes
         
