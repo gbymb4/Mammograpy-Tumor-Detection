@@ -216,4 +216,4 @@ def compute_coords_of_mask(mask):
     largest_region = max(regions, key=lambda x: x.area)
     
     coords = np.column_stack([largest_region.coords[:,1], largest_region.coords[:,0]])
-    return coords
+    return coords.tolist()
