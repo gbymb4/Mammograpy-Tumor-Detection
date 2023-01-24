@@ -442,7 +442,8 @@ def load_train_test_data(
                 generator,
                 collate_fn
             ):
-                data = dataset.datasets[0].rois
+                '''
+                data = dataset.dataset.datasets[0].rois
             
                 pathology_count = Counter([d[3] for d in data])
                 
@@ -450,14 +451,14 @@ def load_train_test_data(
                 weights = torch.DoubleTensor(weights)
                 
                 sampler = torch.utils.data.WeightedRandomSampler(weights, len(weights))
-                
+                '''
                 return DataLoader(
                     dataset,
                     batch_size=batch_size,
-                    shuffle=shuffle,
                     generator=generator,
                     collate_fn=collate_fn,
-                    sampler=sampler
+                    #sampler=sampler,
+                    shuffle=shuffle
                 )
     
     else:
