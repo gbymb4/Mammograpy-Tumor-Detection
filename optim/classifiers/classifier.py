@@ -87,7 +87,10 @@ class ClassifierOptimiser:
                     
                 optim.zero_grad()
                 
-                preds = self.model(imgs).squeeze()
+                preds = self.model(imgs)
+                
+                if len(preds.shape) != 1:
+                    preds = preds.squeeze()
                 
                 loss = criterion(preds, pathologies)
                 
@@ -124,7 +127,10 @@ class ClassifierOptimiser:
                 
                 optim.zero_grad()
                 
-                preds = self.model(imgs).squeeze()
+                preds = self.model(imgs)
+                
+                if len(preds.shape) != 1:
+                    preds = preds.squeeze()
                 
                 loss = criterion(preds, pathologies)
                 
