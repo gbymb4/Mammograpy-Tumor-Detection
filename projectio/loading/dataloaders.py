@@ -442,7 +442,7 @@ def load_train_test_data(
                 generator,
                 collate_fn
             ):
-                data = dataset[0].rois
+                data = dataset.datasets[0].rois
             
                 pathology_count = Counter([d[3] for d in data])
                 
