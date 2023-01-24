@@ -91,6 +91,9 @@ class ClassifierOptimiser:
                 
                 if len(preds.shape) != 1:
                     preds = preds.squeeze()
+                    
+                if len(preds.shape) == 0:
+                    continue
                 
                 loss = criterion(preds, pathologies)
                 
@@ -131,6 +134,9 @@ class ClassifierOptimiser:
                 
                 if len(preds.shape) != 1:
                     preds = preds.squeeze()
+                    
+                if len(preds.shape) == 0:
+                    continue
                 
                 loss = criterion(preds, pathologies)
                 
