@@ -13,19 +13,25 @@ class CNNClassifier(nn.Module):
     def __init__(self, in_channels):
         super().__init__()
         
-        cn1 = nn.Conv2d(in_channels, 64, (9, 9), (1, 1), (2, 2))
+        cn1 = nn.Conv2d(in_channels, 64, (9, 9), (1, 1), (4, 4))
         p1 = nn.MaxPool2d((4, 4), (4, 4))
         
         cn2 = nn.Conv2d(64, 128, (5, 5), (1, 1), (2, 2))
         p2 = nn.MaxPool2d((4, 4), (4, 4))
         
-        cn3 = nn.Conv2d(128, 128, (4, 4), (1, 1), (2, 2))
+        cn3 = nn.Conv2d(128, 256, (3, 3), (1, 1), (1, 1))
+        p3 = nn.MaxPool2d((4, 4), (4, 4))
+        
+        cn4 = nn.Conv2d(256, 512, (3, 3), (1, 1), (1, 1))
+        p4 = nn.MaxPool2d((4, 4), (4, 4))
         
         fl = nn.Flatten()
         
-        fc3 = nn.Linear(256, 128)
+        fc3 = nn.Linear(512, 256)
         
-        fc4 = nn.Linear(128, 128)
+        fc4 = nn.Linear(256, 128)
+        
+        fc5 = nn.Linear(128, 128)
         
         fcout = nn.Linear(128, 1)
         
@@ -34,10 +40,12 @@ class CNNClassifier(nn.Module):
         self.features = nn.Sequential(
             cn1, p1,
             cn2, p2,
-            cn3,
+            cn3, p3,
+            cn4, p4,
             fl,
             fc3,
             fc4,
+            fc5,
             fcout,
             sig
         )
@@ -46,3 +54,4 @@ class CNNClassifier(nn.Module):
     
     def forward(self, x):
         return self.features(x)
+    

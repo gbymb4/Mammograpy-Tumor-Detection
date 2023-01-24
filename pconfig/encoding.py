@@ -27,14 +27,20 @@ INBREAST_LABEL_ENCODING_SCHEME = {
 }
 
 MIAS_LABEL_ENCODING_SCEHEME = {
-    'CIRC': 0,
-    'MISC': 0,
-    'SPIC': 1,
-    'ARCH': 2
+    'circ': 0,
+    'misc': 0,
+    'spic': 1,
+    'arch': 2
 }
 
 DDSM_LABEL_ENCODING_SCHEME = {
     'mass': 0
+}
+
+DDSM_PATHOLOGY_ENCODING_SCHEME = {
+    'BENIGN': 0,
+    'BENIGN_WITHOUT_CALLBACK': 0,   
+    'MALIGNANT': 1    
 }
 
 NUM_CLASSES = 3

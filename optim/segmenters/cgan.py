@@ -7,6 +7,8 @@ Created on Tue Jan 17 13:30:26 2023
 
 import torch
 
+import numpy as np
+
 from torch.optim import Adam
 
 from projectio.loading import format_segmentation_rois, FuzzyBoundingBoxes
@@ -77,6 +79,13 @@ class CGANOptimiser:
                 data = format_segmentation_rois(batch, fuzzy_bboxes_func)
                 
                 imgs, masks = data[:, 0], data[:, 1]
+                
+                if augmentation_callbacks is not None:
+                    imgs, masks = self.__augment(
+                        imgs,
+                        masks,
+                        augmentation_callbacks
+                    )
                 
                 if _data_device_override is not None:
                     imgs = imgs.to(_data_device_override)
@@ -184,3 +193,38 @@ class CGANOptimiser:
         }
             
         return results
+    
+    
+    
+    def __augment(self, imgs, masks, callbacks):
+        new_imgs, new_masks = [], []
+        
+        device = imgs[0].device
+        
+        for img, mask in zip(imgs, masks):
+            temp_img = img.cpu().numpy()
+            temp_mask = mask.cpu().numpy()
+            
+            temp = np.concatenate((temp_img, temp_mask), axis=0)
+            temp = np.swapaxes(temp, 0, 2)
+            
+            for callback in callbacks:
+                temp, _ = callback(temp, np.ones((1, 4)))
+                
+                if len(temp.shape) != 3:
+                    temp = temp[:temp[2], :temp[1], np.newaxis]
+                
+            temp = np.swapaxes(temp, 0, 2) 
+            
+            temp_img, temp_mask = temp
+                
+            new_imgs.append(temp_img)
+            new_masks.append(temp_mask)
+        
+        new_imgs = np.array(new_imgs)
+        new_masks = np.array(new_masks)
+        
+        new_imgs = torch.from_numpy(new_imgs.copy()).float().to(device)
+        new_masks = torch.from_numpy(new_masks.copy()).float().to(device)
+            
+        return new_imgs, new_masks

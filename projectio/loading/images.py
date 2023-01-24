@@ -212,7 +212,7 @@ def load_jpg_masks(dataset, load_limit=None, load_order=None, **kwargs):
 
 
 
-def load_preprocessed_images(dataset, path_suffix=None, load_limit=None):
+def load_preprocessed_images(dataset, load_order=None, path_suffix=None, load_limit=None):
     data_dir = None
     
     if dataset.lower() == 'inbreast':
@@ -225,15 +225,14 @@ def load_preprocessed_images(dataset, path_suffix=None, load_limit=None):
     if path_suffix is not None:
         data_dir = f'{data_dir}{path_suffix}'
     
-    img_fnames = os.listdir(data_dir)
-    img_fnames = list(filter(lambda x: '.npy' in x, img_fnames))
-    img_fnames = list(map(lambda x: f'{data_dir}/' + x, img_fnames))
+    if load_order is not None:
+        img_fnames = [f'{data_dir}/{name}.npy' for name in load_order]
     
-    if dataset.lower() == 'inbreast':
-        img_fnames = sorted(img_fnames, key=lambda x: int(Path(x).name.split('_')[0][:-4]))
-    elif dataset.lower() == 'mias':
-        img_fnames = sorted(img_fnames, key=lambda x: Path(x).name.split('_')[0][:-4])
-    
+    else:
+        img_fnames = os.listdir(data_dir)
+        img_fnames = list(filter(lambda x: '.npy' in x, img_fnames))
+        img_fnames = list(map(lambda x: f'{data_dir}/' + x, img_fnames))
+        
     if load_limit is not None:
         img_fnames = img_fnames[:load_limit]
         

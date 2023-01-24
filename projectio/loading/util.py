@@ -30,7 +30,7 @@ def format_segmentation_rois(rois, fuzzy_bbox_func=None, device='cpu'):
 
 
 def format_segmentation_roi(roi, fuzzy_bbox_func):
-    bbox, coords, _, img = roi
+    bbox, coords, *_, img = roi
     
     img = img.detach().cpu().numpy()
     

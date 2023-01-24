@@ -103,6 +103,30 @@ def save_segmentation_results(
     save_discriminator(disc, save_dir)
     save_training_hist(hist_dict, save_dir)
     
+
+
+def save_classification_results(
+        model, 
+        hist_dict, 
+        dataset='ddsm', 
+        model_type='classifiers'
+    ):
+    
+    save_root_dir = f'out/{dataset.lower()}'
+    
+    if not os.path.isdir(save_root_dir):
+        os.mkdir(save_root_dir)
+        
+    save_parent_dir = f'{save_root_dir}/{model_type}'
+    
+    if not os.path.isdir(save_parent_dir):
+        os.mkdir(save_parent_dir)
+        
+    save_dir = f'{save_parent_dir}/{int(time.time())}'
+    
+    save_model(model, save_dir)
+    save_training_hist(hist_dict, save_dir)
+    
     
     
 def __add_non_learnable_params_to_state_dict(model):

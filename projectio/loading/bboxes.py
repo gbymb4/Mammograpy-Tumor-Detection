@@ -17,6 +17,9 @@ def load_bboxes(dataset, fname_suffix=None, load_limit=None):
         
     elif dataset.lower() == 'mias':
         data_dir = f'{c.PREPROCESSED_MIAS_DIR}/rois'
+        
+    elif dataset.lower() == 'ddsm':
+        data_dir = f'{c.PREPROCESSED_DDSM_DIR}/rois'
     
     if fname_suffix is None:   
         fname = f'{data_dir}/rois.json'
