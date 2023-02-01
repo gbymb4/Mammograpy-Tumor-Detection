@@ -58,7 +58,7 @@ class SSDOptimiser:
             
             self.model.train()
             
-            for batch in self.train_loader:
+            for i, batch in enumerate(self.train_loader):
                 imgs, boxes, labels = batch
                 
                 if augmentation_callbacks is not None:
@@ -78,7 +78,37 @@ class SSDOptimiser:
                     detections,
                     boxes,
                 )
-                
+                '''
+                if i == 0 and epoch % 5 == 0:
+                    import matplotlib.pyplot as plt
+                    from matplotlib.patches import Rectangle
+                    
+                    fig, axs = plt.subplots(len(batch[0]), 1, figsize=(10, len(batch[0]) * 10))
+                    
+                    for ax, img, pboxes, det, label in zip(axs, imgs, targets, detections, labels):
+                        img = np.swapaxes(img.cpu().detach().numpy(), 0, 2)
+                        ax.imshow(img, cmap='gray')
+                        fig.suptitle('training', fontsize=40)
+                        for bbox in pboxes['boxes']:
+                            x_min, y_min, x_max, y_max = bbox.cpu().detach().numpy()
+                            
+                            rect = Rectangle((x_min, y_min), x_max-x_min, y_max-y_min, fill=False, color='red', linewidth=2)
+                            
+                            ax.add_patch(rect)
+                            
+                        for bbox in det['boxes']:
+                            x_min, y_min, x_max, y_max = bbox.cpu().detach().numpy()
+                            
+                            rect = Rectangle((x_min, y_min), x_max-x_min, y_max-y_min, fill=False, color='lightblue', linewidth=2)
+                            
+                            ax.add_patch(rect)
+                        
+                        ax.axis('off')
+                    
+                    fig.tight_layout()
+                    
+                    plt.show()
+                '''
                 train_detect_frac.append(avg_detect_frac)
                 
                 total_loss = losses['bbox_regression'] + losses['classification']
@@ -105,25 +135,51 @@ class SSDOptimiser:
             
             train_tprs.append(sum(train_tpr) / len(train_tpr))
             train_fprs.append(sum(train_fpr) / len(train_fpr))
-            
-            if verbose:
-                print(f'evaluated {len(train_loss)} train batches with avg_loss {avg_train_loss:.4f}')
-                print('-'*32)
                 
             self.model.eval()
                 
-            for batch in self.test_loader:
+            for i, batch in enumerate(self.test_loader):
                 imgs, boxes, labels = batch
                     
                 targets = to_ssd_targets(boxes, labels, device=imgs[0].device)
-                    
+                
                 losses, detections = self.model(imgs, targets)
                 
                 avg_detect_frac = self.__compute_avg_detect_frac(
                     detections,
                     boxes,
                 )
-                
+                '''
+                if i == 0 and epoch % 5 == 0:
+                    import matplotlib.pyplot as plt
+                    from matplotlib.patches import Rectangle
+                    
+                    fig, axs = plt.subplots(len(batch[0]), 1, figsize=(10, len(batch[0]) * 10))
+                    
+                    for ax, img, pboxes, det, label in zip(axs, imgs, targets, detections, labels):
+                        img = np.swapaxes(img.cpu().detach().numpy(), 0, 2)
+                        ax.imshow(img, cmap='gray')
+                        fig.suptitle('testing', fontsize=40)
+                        for bbox in pboxes['boxes']:
+                            x_min, y_min, x_max, y_max = bbox.cpu().detach().numpy()
+                            
+                            rect = Rectangle((x_min, y_min), x_max-x_min, y_max-y_min, fill=False, color='red', linewidth=2)
+                            
+                            ax.add_patch(rect)
+                            
+                        for bbox in det['boxes']:
+                            x_min, y_min, x_max, y_max = bbox.cpu().detach().numpy()
+                            
+                            rect = Rectangle((x_min, y_min), x_max-x_min, y_max-y_min, fill=False, color='lightblue', linewidth=2)
+                            
+                            ax.add_patch(rect)
+                        
+                        ax.axis('off')
+                    
+                    fig.tight_layout()
+                    
+                    plt.show()
+                '''
                 test_detect_frac.append(avg_detect_frac)
                     
                 total_loss = losses['bbox_regression'] + losses['classification']
@@ -147,6 +203,13 @@ class SSDOptimiser:
             
             test_tprs.append(sum(test_tpr) / len(test_tpr))
             test_fprs.append(sum(test_fpr) / len(test_fpr))
+            
+            if verbose:
+                print(f'evaluated {len(train_loss)} train batches with avg_loss {avg_train_loss:.4f}')
+                print(f'->TPR: train = {train_tprs[-1]:.4f}, test = {test_tprs[-1]:.4f}')
+                print(f'->FPR: train = {train_fprs[-1]:.4f}, test = {test_fprs[-1]:.4f}')
+                print(f'->Detection Fraction: train = {train_detect_fracs[-1]:.4f}, test = {test_detect_fracs[-1]:.4f}')
+                print('-'*32)
             
         train_losses, test_losses = np.array(train_losses), np.array(test_losses)
         

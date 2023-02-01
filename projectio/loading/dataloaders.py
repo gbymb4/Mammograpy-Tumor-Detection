@@ -10,10 +10,11 @@ import torch
 import numpy as np
 import pconfig as c
 
-from collections import Counter
-
 from .images import load_preprocessed_images
 from .bboxes import load_bboxes
+
+from ..util import scale_bboxes as do_scale_bboxes
+from ..util import swap_elements as do_swap_elements
 
 from torch.utils.data import DataLoader, Dataset, SubsetRandomSampler, ConcatDataset
 from sklearn.model_selection import KFold
@@ -66,6 +67,9 @@ class ROIDataset(Dataset):
                     continue
                 
                 if bbox_lt_min(box, bbox_min_size):
+                    continue
+                
+                if bbox_outside_limits(box, 512):
                     continue
                     
                 label = encoding[label_str]
@@ -143,7 +147,8 @@ class SegmentationDataset(Dataset):
         
         bboxes = load_bboxes(
             dataset,
-            load_limit=load_limit
+            load_limit=load_limit,
+            fname_suffix='_highres'
         )
         
         imgs, img_names = load_preprocessed_images(
@@ -156,11 +161,12 @@ class SegmentationDataset(Dataset):
         imgs = imgs.astype(float) / 255.0
         imgs = torch.from_numpy(imgs).float()
         imgs = imgs.to(device)
+        imgs.requires_grad_(False)
         
         if dataset.lower() == 'inbreast':
             encoding = c.INBREAST_LABEL_ENCODING_SCHEME
         elif dataset.lower() == 'ddsm':
-            encoding = c.DDSM_LABEL_ENCODING_SCEHEME
+            encoding = c.DDSM_LABEL_ENCODING_SCHEME
         
         all_boxes, all_labels, all_coords = [], [], []
         for bbox_data in bboxes.values():
@@ -187,12 +193,14 @@ class SegmentationDataset(Dataset):
             boxes = np.array(boxes)
             boxes = torch.from_numpy(boxes).float()
             boxes = boxes.to(device)
+            boxes.requires_grad_(False)
             
             all_boxes.append(boxes)
             
             labels = np.array(labels)
             labels = torch.from_numpy(labels).type(torch.int64)
             labels = labels.to(device)
+            labels.requires_grad_(False)
             
             all_labels.append(labels)
             
@@ -219,6 +227,9 @@ class SegmentationDataset(Dataset):
             all_boxes = new_boxes
             all_labels = new_labels
             all_coords = new_coords
+        
+        for i, boxes in enumerate(all_boxes):
+            all_boxes[i] = do_scale_bboxes(boxes, limit=2048)
         
         rois_cropping = []
         for i, (boxes, coords, labels) in enumerate(zip(all_boxes, all_coords, all_labels)):
@@ -257,6 +268,7 @@ class ClassificationDataset(Dataset):
         
         bboxes = load_bboxes(
             dataset,
+            fname_suffix='_highres',
             load_limit=load_limit
         )
         
@@ -270,12 +282,6 @@ class ClassificationDataset(Dataset):
         imgs = imgs.astype(float) / 255.0
         imgs = torch.from_numpy(imgs).float()
         imgs = imgs.to(device)
-        
-        bboxes = load_bboxes(
-            dataset,
-            fname_suffix='_highres',
-            load_limit=load_limit
-        )
         
         encoding = c.DDSM_LABEL_ENCODING_SCHEME
         
@@ -349,6 +355,10 @@ class ClassificationDataset(Dataset):
             all_pathologies = new_pathologies
         
         rois_cropping = []
+        
+        for i, boxes in enumerate(all_boxes):
+            all_boxes[i] = do_scale_bboxes(boxes, limit=2048)
+        
         for i, (boxes, coords, labels, pathologies) in enumerate(zip(all_boxes, all_coords, all_labels, all_pathologies)):
             for box, coord, label, pathology in zip(boxes, coords, labels, pathologies):
                 rois_cropping.append((box, coord, label, pathology, imgs[i]))
@@ -532,7 +542,15 @@ def load_train_test_datasets_only(
 
 
 
-def to_ssd_targets(boxes, labels, ignore_labels=True, device='cpu'):
+def to_ssd_targets(
+        boxes,
+        labels, 
+        ignore_labels=True, 
+        swap_elements=False, 
+        scale_bboxes=True,
+        device='cpu'
+    ):
+    
     if ignore_labels:
         targets = [{
             'boxes': bs,
@@ -546,6 +564,14 @@ def to_ssd_targets(boxes, labels, ignore_labels=True, device='cpu'):
         
     targets = np.array(targets, dtype=dict)
     
+    if swap_elements:
+        for i, target in enumerate(targets): 
+            target['boxes'] = do_swap_elements(target['boxes'], device=device)
+    
+    if scale_bboxes:
+        for i, target in enumerate(targets): 
+            target['boxes'] = do_scale_bboxes(target['boxes'])
+    
     return targets
 
 
@@ -554,6 +580,14 @@ def bbox_lt_min(bbox, bbox_min):
     min_dim = min([bbox[2] - bbox[0], bbox[3] - bbox[1]])
     
     return min_dim < bbox_min
+
+
+
+def bbox_outside_limits(bbox, limit):
+    for value in bbox:
+        if not (0 <= value <= limit): return True
+    
+    return False
 
 
 

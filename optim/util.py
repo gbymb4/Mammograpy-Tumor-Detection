@@ -66,5 +66,3 @@ def __avg_cv_metrics(results_list):
         
     return avg_results_dict
 
-
-

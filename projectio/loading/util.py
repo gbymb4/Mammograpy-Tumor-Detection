@@ -41,7 +41,7 @@ def format_segmentation_roi(roi, fuzzy_bbox_func):
     
     poly = Polygon(coords)
     
-    temp_img = Image.new("1", shape[1:], 0)
+    temp_img = Image.new('1', shape[1:], 0)
     ImageDraw.Draw(temp_img).polygon(poly.exterior.coords, outline=1, fill=1)
     
     mask = np.array(temp_img).T[np.newaxis, :, :]

@@ -209,6 +209,8 @@ class GeneralSSDFeatureExtractor(nn.Module, ABC):
     
     def forward(self, x):
         x = self.features(x)
+        
+        # apply L2 Normalisation
         rescaled = self.scale_weight.view(1, -1, 1, 1) * F.normalize(x)
         output = [rescaled]
 
