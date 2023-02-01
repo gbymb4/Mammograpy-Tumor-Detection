@@ -6,3 +6,4 @@ Created on Mon Nov 21 15:34:41 2022
 """
 
 from .default_cnn import *
+from .base_cnns import *

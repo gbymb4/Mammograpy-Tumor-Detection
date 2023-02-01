@@ -234,8 +234,8 @@ class SegmentationDataset(Dataset):
         rois_cropping = []
         for i, (boxes, coords, labels) in enumerate(zip(all_boxes, all_coords, all_labels)):
             for box, coord, label in zip(boxes, coords, labels):
-                rois_cropping.append((box, coord, label, imgs[i]))
-                
+                rois_cropping.append(np.array((box, coord, label, imgs[i]), dtype=object))
+        
         self.rois = np.array(rois_cropping)
         
         
