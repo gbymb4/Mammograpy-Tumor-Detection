@@ -361,7 +361,7 @@ class ClassificationDataset(Dataset):
         
         for i, (boxes, coords, labels, pathologies) in enumerate(zip(all_boxes, all_coords, all_labels, all_pathologies)):
             for box, coord, label, pathology in zip(boxes, coords, labels, pathologies):
-                rois_cropping.append((box, coord, label, pathology, imgs[i]))
+                rois_cropping.append(np.array((box, coord, label, pathology, imgs[i]), dtype=object))
                 
         self.rois = np.array(rois_cropping)
         

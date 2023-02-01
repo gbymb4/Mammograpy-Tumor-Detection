@@ -14,7 +14,8 @@ from scipy.ndimage import zoom
 from PIL import Image, ImageDraw
 
 def format_segmentation_rois(rois, fuzzy_bbox_func=None, device='cpu'):
-    rois = np.array(list(zip(*rois)))
+    rois = [np.array(l, dtype=object) for l in list(zip(*rois))]
+    rois = np.array(rois)
     
     formatted = np.apply_along_axis(
         format_segmentation_roi,
