@@ -69,7 +69,8 @@ class ClassifierOptimiser:
                 imgs = format_segmentation_rois(batch, fuzzy_bboxes_func)
                 imgs = imgs.squeeze(dim=2)
                 
-                batch = np.swapaxes(np.array(batch), 0, 1)
+                batch = np.array([np.array(elem, dtype=object) for elem in list(zip(*batch))])
+                #batch = np.swapaxes(np.array(batch), 0, 1)
 
                 pathologies = torch.from_numpy(batch[:, -2].astype(float)).float()
                 
@@ -118,7 +119,7 @@ class ClassifierOptimiser:
                 if len(imgs.shape) == 5:
                     imgs = imgs.squeeze(dim=2)
                 
-                batch = np.swapaxes(np.array(batch), 0, 1)
+                batch = np.array([np.array(elem, dtype=object) for elem in list(zip(*batch))])
                 
                 pathologies = torch.from_numpy(batch[:, -2].astype(float)).float()
                 

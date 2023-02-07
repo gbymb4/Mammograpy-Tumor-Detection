@@ -31,14 +31,15 @@ class ResNet50Classifier(nn.Module):
         a2 = nn.ReLU()
         do2 = nn.Dropout()
         
-        fcout = nn.Linear(1000, 3)
+        fcout = nn.Linear(1000, 1)
+        aout = nn.Sigmoid()
         
         self.features = nn.Sequential(
             cn,
             resnet50(),
             fc1, a1, do1,
             fc2, a2, do2,
-            fcout
+            fcout, aout
         )
         
     def forward(self, x):
@@ -53,12 +54,13 @@ class VGG16Classifier(nn.Module):
         
         cn = nn.Conv2d(in_channels, 3, (1, 1))
         
-        fcout = nn.Linear(1000, 3)
+        fcout = nn.Linear(1000, 1)
+        aout = nn.Sigmoid()
         
         self.features = nn.Sequential(
             cn,
             vgg16(),
-            fcout
+            fcout, aout
         )
         
     def forward(self, x):
@@ -81,14 +83,15 @@ class EfficientNetV2Classifier(nn.Module):
         a2 = nn.ReLU()
         do2 = nn.Dropout()
         
-        fcout = nn.Linear(1000, 3)
+        fcout = nn.Linear(1000, 1)
+        aout = nn.Sigmoid()
         
         self.features = nn.Sequential(
             cn,
             efficientnet_v2_s(),
             fc1, a1, do1,
             fc2, a2, do2,
-            fcout
+            fcout, aout
         )
         
     def forward(self, x):
@@ -107,13 +110,14 @@ class MobileNetV3Classifier(nn.Module):
         a1 = nn.ReLU()
         do1 = nn.Dropout()
         
-        fcout = nn.Linear(1000, 3)
+        fcout = nn.Linear(1000, 1)
+        aout = nn.Sigmoid()
         
         self.features = nn.Sequential(
             cn,
             mobilenet_v3_large(),
             fc1, a1, do1,
-            fcout
+            fcout, aout
         )
         
     def forward(self, x):
