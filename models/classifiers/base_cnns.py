@@ -36,7 +36,7 @@ class ResNet50Classifier(nn.Module):
         
         self.features = nn.Sequential(
             cn,
-            resnet50(),
+            resnet50(**kwargs),
             fc1, a1, do1,
             fc2, a2, do2,
             fcout, aout
@@ -59,7 +59,7 @@ class VGG16Classifier(nn.Module):
         
         self.features = nn.Sequential(
             cn,
-            vgg16(),
+            vgg16(**kwargs),
             fcout, aout
         )
         
@@ -88,7 +88,7 @@ class EfficientNetV2Classifier(nn.Module):
         
         self.features = nn.Sequential(
             cn,
-            efficientnet_v2_s(),
+            efficientnet_v2_s(**kwargs),
             fc1, a1, do1,
             fc2, a2, do2,
             fcout, aout
@@ -115,7 +115,7 @@ class MobileNetV3Classifier(nn.Module):
         
         self.features = nn.Sequential(
             cn,
-            mobilenet_v3_large(),
+            mobilenet_v3_large(**kwargs),
             fc1, a1, do1,
             fcout, aout
         )

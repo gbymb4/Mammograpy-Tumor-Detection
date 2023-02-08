@@ -75,7 +75,7 @@ class CGANOptimiser:
             self.gen.train()
             self.disc.train()
             
-            for batch in self.train_loader:
+            for i, batch in enumerate(self.train_loader):
                 data = format_segmentation_rois(batch, fuzzy_bboxes_func)
                 
                 imgs, masks = data[:, 0], data[:, 1]
@@ -90,7 +90,7 @@ class CGANOptimiser:
                 if _data_device_override is not None:
                     imgs = imgs.to(_data_device_override)
                     masks = masks.to(_data_device_override)
-                    
+                
                 gen_optim.zero_grad()
                 
                 fake_masks = self.gen(imgs)
@@ -135,7 +135,7 @@ class CGANOptimiser:
             train_dices.append(sum(train_dice) / len(train_dice))
             train_ious.append(sum(train_iou) / len(train_iou))
             
-            for batch in self.test_loader:
+            for i, batch in enumerate(self.test_loader):
                 data = format_segmentation_rois(batch, fuzzy_bboxes_func)
                 
                 imgs, masks = data[:, 0], data[:, 1]
@@ -146,7 +146,32 @@ class CGANOptimiser:
                 
                 fake_masks = self.gen(imgs)
                 disc_preds = self.disc(imgs, fake_masks)
+                '''
+                import matplotlib.pyplot as plt
+                if i == 0:
+                    fig, axs = plt.subplots(len(batch), 4, figsize=(40, 10 * len(batch)))
                 
+                    axs[0][0].set_title('Tumor ROI', fontsize=64)
+                    axs[0][1].set_title('Mask Ground Truth', fontsize=64)
+                    axs[0][2].set_title('Raw Output', fontsize=64)
+                    axs[0][3].set_title('Thresholded Mask', fontsize=64)
+                
+                    for img, real, fake, ax_row in zip(imgs, masks, fake_masks, axs):
+                        ax_row[0].imshow(np.swapaxes(img.detach().cpu().numpy(), 0, 2), cmap='gray')
+                        ax_row[1].imshow(np.swapaxes(real.detach().cpu().numpy(), 0, 2), cmap='gray')
+                        ax_row[2].imshow(np.swapaxes(fake.detach().cpu().numpy(), 0, 2), cmap='gray')
+                        
+                        fake_copy = fake.clone() > 0.5
+                        
+                        ax_row[3].imshow(np.swapaxes(fake_copy.detach().cpu().numpy(), 0, 2), cmap='gray')
+                        
+                        for ax in ax_row:
+                            ax.axis('off')      
+                            
+                    fig.tight_layout()
+                    
+                    plt.show()
+                '''
                 adversarial_loss = torch.mean(-torch.log(1 - disc_preds))
                 
                 content_loss = content_criterion(

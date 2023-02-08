@@ -70,7 +70,6 @@ class ClassifierOptimiser:
                 imgs = imgs.squeeze(dim=2)
                 
                 batch = np.array([np.array(elem, dtype=object) for elem in list(zip(*batch))])
-                #batch = np.swapaxes(np.array(batch), 0, 1)
 
                 pathologies = torch.from_numpy(batch[:, -2].astype(float)).float()
                 

@@ -43,7 +43,7 @@ class ROIDataset(Dataset):
             load_limit=load_limit
         )
         
-        imgs = imgs.astype(float) / 255.0
+        imgs = imgs.astype(np.float16) / 255.0
         imgs = torch.from_numpy(imgs).float()
         imgs = imgs.to(device)
         
@@ -158,7 +158,7 @@ class SegmentationDataset(Dataset):
             load_limit=load_limit
         )
         
-        imgs = imgs.astype(float) / 255.0
+        imgs = imgs.astype(np.float16) / 255.0
         imgs = torch.from_numpy(imgs).float()
         imgs = imgs.to(device)
         imgs.requires_grad_(False)
@@ -279,7 +279,7 @@ class ClassificationDataset(Dataset):
             load_limit=load_limit
         )
         
-        imgs = imgs.astype(float) / 255.0
+        imgs = imgs.astype(np.float16) / 255.0
         imgs = torch.from_numpy(imgs).float()
         imgs = imgs.to(device)
         
