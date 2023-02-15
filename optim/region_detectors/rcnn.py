@@ -81,7 +81,7 @@ class RCNNOptimiser:
                     detections,
                     boxes,
                 )
-                
+                '''
                 if i == 0 and epoch % 5 == 0:
                     import matplotlib.pyplot as plt
                     from matplotlib.patches import Rectangle
@@ -113,7 +113,7 @@ class RCNNOptimiser:
                     fig.tight_layout()
                     
                     plt.show()
-                
+                '''
                 train_detect_frac.append(avg_detect_frac)
                 
                 total_loss = sum(losses.values())
@@ -124,7 +124,6 @@ class RCNNOptimiser:
                 detects_and_boxes = list(zip(detections, boxes))
                 
                 train_tpr.extend(compute_batch_metric(compute_tpr_ssd, detects_and_boxes))
-                #train_fpr.extend(compute_batch_metric(compute_fpr, detects_and_boxes))
                 
                 optim.step()
                 
@@ -138,7 +137,7 @@ class RCNNOptimiser:
             avg_train_detect_frac = sum(train_detect_frac) / len(train_detect_frac)
             train_detect_fracs.append(avg_train_detect_frac)
             
-            #train_tprs.append(sum(train_tpr) / len(train_tpr))
+            train_tprs.append(sum(train_tpr) / len(train_tpr))
             #train_fprs.append(sum(train_fpr) / len(train_fpr))
                 
             for i, batch in enumerate(self.test_loader):
@@ -156,7 +155,7 @@ class RCNNOptimiser:
                     detections,
                     boxes,
                 )
-            
+                '''
                 if i == 0 and epoch % 5 == 0:
                     import matplotlib.pyplot as plt
                     from matplotlib.patches import Rectangle
@@ -188,7 +187,7 @@ class RCNNOptimiser:
                     fig.tight_layout()
                     
                     plt.show()
-                
+                '''
                 test_detect_frac.append(avg_detect_frac)
                     
                 total_loss = sum(losses.values())
