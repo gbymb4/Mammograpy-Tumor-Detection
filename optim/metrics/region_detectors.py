@@ -124,7 +124,7 @@ def compute_tpr(detections, true_boxes, intersection_threshold=0.6):
 '''
 
 
-def compute_tpr(detections, true_boxes, intersection_threshold=0.6):
+def compute_tpr_ssd(detections, true_boxes, intersection_threshold=0.6):
     pred_boxes = detections['boxes'].detach().cpu()
     true_boxes = true_boxes.detach().cpu()
 
@@ -177,7 +177,7 @@ def compute_fpr(detections, true_boxes, intersection_threshold=0.6):
 '''  
 
 
-def compute_fpr(detections, true_boxes, intersection_threshold=0.6):
+def compute_fpr_ssd(detections, true_boxes, intersection_threshold=0.6):
     pred_boxes = detections['boxes'].detach().cpu()
     true_boxes = true_boxes.cpu()
 

@@ -50,9 +50,9 @@ class ROIDataset(Dataset):
         if dataset.lower() == 'inbreast':
             encoding = c.INBREAST_LABEL_ENCODING_SCHEME
         elif dataset.lower() == 'mias':
-            encoding = c.MIAS_LABEL_ENCODING_SCEHEME
+            encoding = c.MIAS_LABEL_ENCODING_SCHEME
         elif dataset.lower() == 'ddsm':
-            encoding = c.DDSM_LABEL_ENCODING_SCEHEME
+            encoding = c.DDSM_LABEL_ENCODING_SCHEME
         
         all_boxes, all_labels = [], []
         for bbox_data in bboxes.values():

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Mon Dec 12 17:58:17 2022
+Created on Sun Feb 12 19:31:10 2023
 
 @author: Gavin
 """
@@ -12,9 +12,9 @@ import numpy as np
 from torch.optim import SGD
 
 from projectio.loading import to_ssd_targets
-from optim.metrics import compute_batch_metric, compute_fpr_ssd, compute_tpr_ssd
+from optim.metrics import compute_batch_metric, compute_tpr_ssd
 
-class SSDOptimiser:
+class RCNNOptimiser:
     
     def __init__(self, model, train_loader, test_loader):
         self.model = model
@@ -40,11 +40,11 @@ class SSDOptimiser:
         train_losses, test_losses = [], []
         train_detect_fracs, test_detect_fracs = [], []
         train_tprs, test_tprs = [], []
-        train_fprs, test_fprs = [], []
+        #train_fprs, test_fprs = [], []
         
         if verbose:
             print('#'*32)
-            print('beginning SSD optimisation loop')
+            print('beginning RCNN optimisation loop')
             print('#'*32)
         
         for epoch in range(1, epochs + 1):
@@ -55,9 +55,7 @@ class SSDOptimiser:
             train_loss, test_loss = [], []
             train_detect_frac, test_detect_frac = [], []
             train_tpr, test_tpr = [], []
-            train_fpr, test_fpr = [], []
-            
-            self.model.train()
+            #train_fpr, test_fpr = [], []
             
             for i, batch in enumerate(self.train_loader):
                 imgs, boxes, labels = batch
@@ -73,7 +71,11 @@ class SSDOptimiser:
                 
                 targets = to_ssd_targets(boxes, labels, device=imgs[0].device)
                 
-                losses, detections = self.model(imgs, targets)
+                self.model.train()
+                losses, _ = self.model(imgs, targets)
+                
+                self.model.eval()
+                _, detections = self.model(imgs)
                 
                 avg_detect_frac = self.__compute_avg_detect_frac(
                     detections,
@@ -114,7 +116,7 @@ class SSDOptimiser:
                 
                 train_detect_frac.append(avg_detect_frac)
                 
-                total_loss = losses['bbox_regression'] + losses['classification']
+                total_loss = sum(losses.values())
                 total_loss.backward()
                 
                 train_loss.append((total_loss.item(), len(imgs)))
@@ -122,7 +124,7 @@ class SSDOptimiser:
                 detects_and_boxes = list(zip(detections, boxes))
                 
                 train_tpr.extend(compute_batch_metric(compute_tpr_ssd, detects_and_boxes))
-                train_fpr.extend(compute_batch_metric(compute_fpr_ssd, detects_and_boxes))
+                #train_fpr.extend(compute_batch_metric(compute_fpr, detects_and_boxes))
                 
                 optim.step()
                 
@@ -136,17 +138,19 @@ class SSDOptimiser:
             avg_train_detect_frac = sum(train_detect_frac) / len(train_detect_frac)
             train_detect_fracs.append(avg_train_detect_frac)
             
-            train_tprs.append(sum(train_tpr) / len(train_tpr))
-            train_fprs.append(sum(train_fpr) / len(train_fpr))
-                
-            self.model.eval()
+            #train_tprs.append(sum(train_tpr) / len(train_tpr))
+            #train_fprs.append(sum(train_fpr) / len(train_fpr))
                 
             for i, batch in enumerate(self.test_loader):
                 imgs, boxes, labels = batch
                     
                 targets = to_ssd_targets(boxes, labels, device=imgs[0].device)
                 
-                losses, detections = self.model(imgs, targets)
+                self.model.train()
+                losses, _ = self.model(imgs, targets)
+                
+                self.model.eval()
+                _, detections = self.model(imgs)
                 
                 avg_detect_frac = self.__compute_avg_detect_frac(
                     detections,
@@ -187,14 +191,14 @@ class SSDOptimiser:
                 
                 test_detect_frac.append(avg_detect_frac)
                     
-                total_loss = losses['bbox_regression'] + losses['classification']
+                total_loss = sum(losses.values())
                 
                 test_loss.append((total_loss.item(), len(imgs)))
                 
                 detects_and_boxes = list(zip(detections, boxes))
                 
                 test_tpr.extend(compute_batch_metric(compute_tpr_ssd, detects_and_boxes))
-                test_fpr.extend(compute_batch_metric(compute_fpr_ssd, detects_and_boxes))
+                #test_fpr.extend(compute_batch_metric(compute_fpr, detects_and_boxes))
                 
             total_test_loss = sum([e[0] for e in test_loss])
             total_instances = sum([e[1] for e in test_loss])
@@ -207,12 +211,12 @@ class SSDOptimiser:
             test_detect_fracs.append(avg_test_detect_frac)
             
             test_tprs.append(sum(test_tpr) / len(test_tpr))
-            test_fprs.append(sum(test_fpr) / len(test_fpr))
+            #test_fprs.append(sum(test_fpr) / len(test_fpr))
             
             if verbose:
                 print(f'evaluated {len(train_loss)} train batches with avg_loss {avg_train_loss:.4f}')
                 print(f'->TPR: train = {train_tprs[-1]:.4f}, test = {test_tprs[-1]:.4f}')
-                print(f'->FPR: train = {train_fprs[-1]:.4f}, test = {test_fprs[-1]:.4f}')
+                #print(f'->FPR: train = {train_fprs[-1]:.4f}, test = {test_fprs[-1]:.4f}')
                 print(f'->Detection Fraction: train = {train_detect_fracs[-1]:.4f}, test = {test_detect_fracs[-1]:.4f}')
                 print('-'*32)
             
@@ -222,7 +226,7 @@ class SSDOptimiser:
         test_detect_fracs = np.array(test_detect_fracs)
         
         train_tprs, test_tprs = np.array(train_tprs), np.array(test_tprs)
-        train_fprs, test_fprs = np.array(train_fprs), np.array(test_fprs)
+        #train_fprs, test_fprs = np.array(train_fprs), np.array(test_fprs)
         
         results = {
             'train_loss': train_losses,
@@ -231,8 +235,8 @@ class SSDOptimiser:
             'test_detect_frac': test_detect_fracs,
             'train_tpr': train_tprs,
             'test_tpr': test_tprs,
-            'train_fpr': train_fprs,
-            'test_fpr': test_fprs,
+            #'train_fpr': train_fprs,
+            #'test_fpr': test_fprs,
         }
         
         return results
@@ -284,5 +288,3 @@ class SSDOptimiser:
             new_boxes.append(temp_boxes)
             
         return new_imgs, new_boxes
-            
-            
