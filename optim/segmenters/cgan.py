@@ -118,7 +118,7 @@ class CGANOptimiser:
                 disc_loss.backward()
                 disc_optim.step()
                 
-                mask_ious = batch_mask_ious(masks, fake_masks)
+                mask_ious = batch_mask_ious(masks, fake_masks > 0.5)
                 
                 train_gen_loss.append(gen_loss.item() / len(batch))
                 train_disc_loss.append(disc_loss.item() / len(batch))
@@ -186,7 +186,7 @@ class CGANOptimiser:
                 
                 disc_loss = discriminator_criterion(real_output, fake_output)
                 
-                mask_ious = batch_mask_ious(masks, fake_masks)
+                mask_ious = batch_mask_ious(masks, fake_masks > 0.5)
                 
                 test_gen_loss.append(gen_loss.item() / len(batch))
                 test_disc_loss.append(disc_loss.item() / len(batch))
@@ -204,6 +204,8 @@ class CGANOptimiser:
                 print(f'--evaluated {len(train_gen_loss)} train batches')
                 print(f'->avg generator loss: train = {train_gen_losses[-1]:.4f}, test = {test_gen_losses[-1]:.4f}')
                 print(f'->avg discriminator loss: train = {train_disc_losses[-1]:.4f}, test = {test_disc_losses[-1]:.4f}')
+                print(f'->avg IoU: train = {train_ious[-1]:.4f}, test = {test_ious[-1]:.4f}')
+                print(f'->avg DICE: train = {train_dices[-1]:.4f}, test = {test_dices[-1]:.4f}')
                 print('-'*32)
                 
         results = {

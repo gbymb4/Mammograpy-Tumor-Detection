@@ -27,7 +27,8 @@ class ROIDataset(Dataset):
             device='cpu', 
             filter_empty_imgs=True,
             bbox_min_size=7,
-            load_limit=None
+            load_limit=None,
+            **kwargs
         ):
 
         super().__init__()
@@ -40,7 +41,7 @@ class ROIDataset(Dataset):
         imgs, _ = load_preprocessed_images(
             dataset,
             load_order=list(bboxes.keys()),
-            load_limit=load_limit
+            **kwargs
         )
         
         imgs = imgs.astype(np.float16) / 255.0
@@ -140,7 +141,8 @@ class SegmentationDataset(Dataset):
             device='cpu', 
             filter_empty_imgs=True,
             bbox_min_size=7,
-            load_limit=None
+            load_limit=None,
+            **kwargs
         ):
 
         super().__init__()
@@ -155,7 +157,7 @@ class SegmentationDataset(Dataset):
             dataset,
             load_order=list(bboxes.keys()),
             path_suffix='_highres',
-            load_limit=load_limit
+            **kwargs
         )
         
         imgs = imgs.astype(np.float16) / 255.0
@@ -261,7 +263,8 @@ class ClassificationDataset(Dataset):
             device='cpu', 
             filter_empty_imgs=True,
             bbox_min_size=7,
-            load_limit=None
+            load_limit=None,
+            **kwargs
         ):
 
         super().__init__()
@@ -276,7 +279,7 @@ class ClassificationDataset(Dataset):
             dataset,
             load_order=list(bboxes.keys()),
             path_suffix='_highres',
-            load_limit=load_limit
+            **kwargs
         )
         
         imgs = imgs.astype(np.float16) / 255.0
@@ -420,6 +423,88 @@ def load_cross_validation_sets(
         
     return all_folds
 
+
+
+def load_train_valid_test_data(
+        dataset_names,
+        dataset_type,
+        seed=0,
+        device='cpu',
+        batch_size=1,
+        valid_size=0.1,
+        test_size=0.1,
+        **kwargs
+    ):
+    
+    generator = torch.Generator().manual_seed(seed)
+    
+    train_dataset, temp_dataset = load_train_test_datasets_only(
+        dataset_names,
+        dataset_type,
+        seed,
+        device,
+        batch_size,
+        valid_size + test_size,
+        **kwargs
+    )
+    
+    temp_size = len(temp_dataset)
+    
+    valid_ratio = valid_size / (valid_size + test_size)
+    
+    valid_samples = int(valid_ratio * temp_size)
+    test_samples = temp_size - valid_samples
+    
+    valid_dataset, test_dataset = torch.\
+        utils.\
+        data.\
+        random_split(
+            temp_dataset,
+            [valid_samples, test_samples],
+            generator=generator
+        )
+    
+    
+    def init_dataloader(
+            dataset,
+            batch_size,
+            shuffle,
+            generator,
+            collate_fn
+        ):
+        return DataLoader(
+            dataset,
+            batch_size=batch_size,
+            shuffle=shuffle,
+            generator=generator,
+            collate_fn=collate_fn
+        )
+        
+    train_dataloader = init_dataloader(
+        train_dataset,
+        batch_size=batch_size,
+        shuffle=True,
+        generator=generator,
+        collate_fn=__collate
+    )
+    
+    valid_dataloader = init_dataloader(
+        valid_dataset,
+        batch_size=batch_size,
+        shuffle=True,
+        generator=generator,
+        collate_fn=__collate
+    )
+    
+    test_dataloader = init_dataloader(
+        test_dataset,
+        batch_size=batch_size,
+        shuffle=True,
+        generator=generator,
+        collate_fn=__collate
+    )
+    
+    return train_dataloader, valid_dataloader, test_dataloader
         
 
 def load_train_test_data(

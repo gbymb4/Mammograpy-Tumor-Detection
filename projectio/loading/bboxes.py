@@ -33,7 +33,7 @@ def load_bboxes(dataset, fname_suffix=None, load_limit=None):
       
     if load_limit is not None:
         keys = loaded.keys()
-        keys = list(keys)[:load_limit]
+        keys = list(keys)[load_limit[0]:load_limit[1]]
         
         loaded = {key: loaded[key] for key in keys}
         

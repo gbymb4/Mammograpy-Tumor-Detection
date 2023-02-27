@@ -101,7 +101,8 @@ def vgg_fmap_extractor(backbone, trainable_backbone=False):
             fc,
         ),
     )
-    
+    print(features)
+    print(extra)
     return features, extra
     
 

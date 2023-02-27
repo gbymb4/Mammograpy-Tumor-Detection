@@ -52,7 +52,7 @@ def load_dicom_mammograms(dataset, load_limit=None, **kwargs):
     img_fnames = sorted(img_fnames, key=lambda x: int(Path(x).name.split('_')[0]))
     
     if load_limit is not None:
-        img_fnames = img_fnames[:load_limit]
+        img_fnames = img_fnames[load_limit[0]:load_limit[1]]
     
     loaded = [load_dicom_mammogram(fname, **kwargs) for fname in img_fnames]
     
@@ -131,7 +131,7 @@ def load_pgm_mammograms(dataset, load_limit=None, load_order=None, **kwargs):
         img_fnames = sorted(img_fnames, key=lambda x: int(Path(x).name.split('_')[0]))
     
     if load_limit is not None:
-        img_fnames = img_fnames[:load_limit]
+        img_fnames = img_fnames[load_limit[0]:load_limit[1]]
     
     loaded = [load_pgm_mammogram(fname, is_mias=is_mias, **kwargs) for fname in img_fnames]
     
@@ -181,7 +181,7 @@ def load_jpg_mammograms(dataset, load_limit=None, load_order=None, **kwargs):
         img_fnames = load_order
         
         if load_limit is not None:
-            img_fnames = img_fnames[:load_limit]
+            img_fnames = img_fnames[load_limit[0]:load_limit[1]]
     
     loaded = [load_jpg_mammogram(fname, **kwargs) for fname in img_fnames]
     
@@ -202,7 +202,7 @@ def load_jpg_masks(dataset, load_limit=None, load_order=None, **kwargs):
         img_fnames = load_order
         
         if load_limit is not None:
-            img_fnames = img_fnames[:load_limit]
+            img_fnames = img_fnames[load_limit[0]:load_limit[1]]
     
     loaded = [load_jpg_mammogram(fname, **kwargs) for fname in img_fnames]
     
@@ -212,7 +212,14 @@ def load_jpg_masks(dataset, load_limit=None, load_order=None, **kwargs):
 
 
 
-def load_preprocessed_images(dataset, load_order=None, path_suffix=None, load_limit=None):
+def load_preprocessed_images(
+        dataset,
+        load_order=None,
+        path_suffix=None, 
+        load_limit=None,
+        verbose=False
+    ):
+    
     data_dir = None
     
     if dataset.lower() == 'inbreast':
@@ -234,9 +241,17 @@ def load_preprocessed_images(dataset, load_order=None, path_suffix=None, load_li
         img_fnames = list(map(lambda x: f'{data_dir}/' + x, img_fnames))
         
     if load_limit is not None:
-        img_fnames = img_fnames[:load_limit]
+        img_fnames = img_fnames[load_limit[0]:load_limit[1]]
+    
+    def load_img(img_fname):
+        img = np.load(img_fname).astype(np.uint8)
         
-    loaded = [np.load(fname) for fname in img_fnames]
+        if verbose:
+            print(f'loaded {img_fname}')
+            
+        return img
+    
+    loaded = [load_img(fname) for fname in img_fnames]
     
     imgs = np.array(loaded)
     names = np.array([Path(fname).name.split('.')[0] for fname in img_fnames])
